@@ -88,7 +88,7 @@ uint32_t sensor5 = 0;
 uint32_t sensor6 = 0;
 uint32_t tempo = 0;
 unsigned long t_start = 0; //tempo do contador no início do experimento (utilizado para cálculo do tempo do experimento)
-unsigned int start_flag = 0; //indica o início do experimento - arduíno inicía coleta de dados
+unsigned int start_flag = 48; //indica o início do experimento - arduíno inicía coleta de dados
 
 // Para o PID
 unsigned long result_LSB_new;
@@ -128,7 +128,6 @@ PID myPid(1, 0, 0);
 
 void setup() {
   SerialUSB.begin(2000000);//inicia a comunicação serial
-  SerialUSB.write("open port serial");
   //###################################################################################
   // ADC setup stuff
   //###################################################################################
@@ -176,7 +175,7 @@ void setup() {
 }
 
 void loop() {
-  while (start_flag==0){ 
+  while (start_flag==48){ // 48 é o zero do ASCII
     count=0;
     digitalWrite(RSTN,LOW);
     digitalWrite(RSTN,HIGH);
@@ -189,7 +188,7 @@ void loop() {
   
   t_start = micros();
   
-  while (start_flag!=0){
+  while (start_flag==49){ // 49 é ASCII para 1
 
     // Para o ADC
     //Acquisition Bloc -----------------------------------
@@ -251,6 +250,7 @@ void loop() {
     SerialUSB.print(sensor6);
     SerialUSB.print("@");
     SerialUSB.print(pos_encoder);
+    SerialUSB.print("\n");
     //Bloc duration = 462us
     //---------------------------/-------------------------
 
@@ -261,7 +261,7 @@ void loop() {
     //---------------------------/-------------------------
 
 
-delay(2000);
+  delay(2000);
 
   }
 }
