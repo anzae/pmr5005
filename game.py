@@ -1,7 +1,10 @@
+# PyGame imports
 import pygame
 from pygame.locals import *
 from sys import exit
 from colors import * 
+
+# Data acquisition imports
 import serial
 import re
 from datetime import datetime
@@ -9,7 +12,12 @@ import time
 import json
 from threading import Thread
 
-# Serial setup
+### Serial setup
+"""
+    Setting up the serial communication with the handlebars. 
+    Change the port name according to your computer or use terminal to input the port name
+    The script will try to open the port, and end the program if failed
+"""
 # port_name = input("Port name: ")
 port_name = "COM3"
 baud_rate = 2000000
@@ -17,54 +25,66 @@ try:
     ser = serial.Serial(port_name, baud_rate, timeout=1)
 except: 
     print("Nao foi possivel abrir a porta serial")
+    exit()
 
-# File JSON setup
-# d = datetime.now()
-# date_formatted = '{}-{}-{}-{}h{}'.format(d.year, d.month, d.day, d.hour, d.minute)
-# sensorsJson = "results/sensors-" + date_formatted + ".json"    
-# list_sensors = []
-DATA = 0
+### File JSON setup
+"""
+    The script creates a new file inside the results folder named "sensors-YYYY-MM-DD-HHhMM"
+    This file will be soon used to save the data coming from the Arduino
+"""
+d = datetime.now()
+date_formatted = '{}-{}-{}-{}h{}'.format(d.year, d.month, d.day, d.hour, d.minute)
+sensorsJson = "results/sensors-" + date_formatted + ".json"    
+list_sensors = []
 
+global GAME_RUNNING
+GAME_RUNNING = True
+ENCODER = 0
 
-
+# TODO: document this function
+# this function is designed to be run in parallel with game main loop
 def worker():
-    global DATA
-    while True:
-        # processamento dos dados via serial
+    while GAME_RUNNING:
+        global ENCODER
+        # data processing
+        # data format: string #T,S1,S2,S3,S4,S5,S6@E\n * n
         data = ser.readline()
         if data: 
-            print(data)
-            DATA = data
-        #     s_time = re.findall("#([0-9]+)", str(data))[0]
-        #     S1 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[0]
-        #     S2 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[1]
-        #     S3 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[2]
-        #     S4 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[3]
-        #     S5 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[4]
-        #     S6 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[5]
-        #     encoder = re.findall("@(-*[0-9]*\.*[0-9]*)", str(data))[0]
+            T = re.findall("#([0-9]+)", str(data))[0]
+            S1 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[0]
+            S2 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[1]
+            S3 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[2]
+            S4 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[3]
+            S5 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[4]
+            S6 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[5]
+            E = re.findall("@(-*[0-9]*\.*[0-9]*)", str(data))[0]
 
-        #     DATA = {
-        #         "s_time": s_time,
-        #         "S1": S1,
-        #         "S2": S2,
-        #         "S3": S3,
-        #         "S4": S4,
-        #         "S5": S5,
-        #         "S6": S6,
-        #         "encoder": encoder
-        #     }
-        #     list_sensors.append(DATA)
+            # new data format: JSON Array < {"T": T, S1": S1, "S2": S2, "S3": S3, "S4": S4, "S5": S5, "S6": S6, "E": E} >
+            formatted_data = {
+                "T": T,
+                "S1": S1,
+                "S2": S2,
+                "S3": S3,
+                "S4": S4,
+                "S5": S5,
+                "S6": S6,
+                "E": E
+            }
+            list_sensors.append(formatted_data)
 
+            ENCODER = E
+
+# TODO: document this function
 def end_game():
-    # with open(sensorsJson, 'w') as file:
-        # ser.write("0".encode())
-        # ser.close()
-        # json.dump(list_sensors, file)
-        # time.sleep(0.5)
+    with open(sensorsJson, 'w') as file:
+        ser.write("0".encode())
+        ser.close()
+        json.dump(list_sensors, file)
+        time.sleep(0.5)
     pygame.quit()
     exit()
 
+### THOSE 3 FUNCTIONS SHOULD BE MOVED TO CONTROLLER
 def create_fonts(font_sizes_list):
     "Creates different fonts with one list"
     fonts = []
@@ -87,38 +107,51 @@ def display_fps():
         where=(5, 5))
 
 
-
-
+### Thread start
+"""
+    This allows 'worker' to run in parallel with the game
+    Otherwise the game won't run properly
+"""
 t = Thread(target=worker)
 t.daemon = True
 t.start()
 
-# init PyGame, init data acquisition
+### Initialization
+"""
+    Initializes PyGame and data acquisition
+    Arduino is programmed to start sending data when it receives this value of "1".encode()
+"""
 pygame.init()
-ser.write("1".encode())
+ser.write("1".encode()) 
 
-# Screen setup
+### Screen setup
+"""
+    The screen is set up with width, height and caption
+    Clock starts
+    Fonts are created
+"""
 WIDTH = 640
 HEIGHT = 480
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Game")
+pygame.display.set_caption("Game PMR5005")
 clock = pygame.time.Clock()
-
-
 fonts = create_fonts([32, 16, 14, 8])
 
-game_running = True
-while game_running:
 
-    screen.fill(BLUE)
-    display_fps()
+# TODO: find out why when running game.py for the second time without disconnecting Arduino, the game breaks when I try to close it
+# TODO: NEXT STEP: create a box and make it move according to the encoder value
 
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            end_game()
+if __name__ == '__main__':
+    # TODO: document this MAIN LOOP
+    while GAME_RUNNING:
 
+        screen.fill(BLUE)
+        display_fps()
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                GAME_RUNNING = False
+                end_game()
     
-
-    
-    clock.tick(60)
-    pygame.display.flip()
+        clock.tick(60)
+        pygame.display.flip()
