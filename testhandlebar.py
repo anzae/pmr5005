@@ -29,7 +29,7 @@ except:
 ser.write("1".encode())
 
 while (datetime.now() - t_start).seconds < 5:
-    serial_bytes = ser.in_waiting
+
     # dados vem na forma de #T,S1,S2,S3,S4,S5,S6@E
     data = ser.readline()
     
