@@ -19,7 +19,7 @@ from threading import Thread
     The script will try to open the port, and end the program if failed
 """
 # port_name = input("Port name: ")
-port_name = "COM3"
+port_name = "COM10"
 baud_rate = 2000000
 try:
     ser = serial.Serial(port_name, baud_rate, timeout=1)
@@ -72,7 +72,7 @@ def worker():
             }
             list_sensors.append(formatted_data)
 
-            ENCODER = E
+            ENCODER = int(E)
 
 # TODO: document this function
 def end_game():
@@ -138,6 +138,11 @@ clock = pygame.time.Clock()
 fonts = create_fonts([32, 16, 14, 8])
 
 
+FPS = 60
+
+x = 300
+
+
 # TODO: find out why when running game.py for the second time without disconnecting Arduino, the game breaks when I try to close it
 # TODO: NEXT STEP: create a box and make it move according to the encoder value
 
@@ -153,5 +158,17 @@ if __name__ == '__main__':
                 GAME_RUNNING = False
                 end_game()
     
-        clock.tick(60)
+        clock.tick(FPS)
+        dt = clock.tick(FPS) /1000
+
+
+        # movimentação
+        x = x - ENCODER * dt
+
+
+        pygame.draw.rect(screen, RED, (x, 60, 40, 40))
+
+
+
+
         pygame.display.flip()
