@@ -1,4 +1,8 @@
 from datetime import datetime
+from consts import *
+import pygame
+from pygame.locals import *
+import time
 
 # O programa do Arduino começa a enviar dados quando recebe 1 pela porta serial
 def start_serial(serial):
@@ -19,3 +23,11 @@ def set_velocity(player, encoder):
     angular_position = get_angular_position(encoder)
     player.velx += angular_position * const
     # depois tem que setar a posição fazendo pos += velocidade * deltaT
+
+def create_fonts(font_sizes_list):
+    "Creates different fonts with one list"
+    fonts = []
+    for size in font_sizes_list:
+        fonts.append(
+            pygame.font.SysFont("Arial", size))
+    return fonts
