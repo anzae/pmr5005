@@ -2,6 +2,7 @@
 import pygame
 from pygame.locals import *
 from sys import exit
+import time
 from consts import * 
 from controller import *
 
@@ -9,7 +10,6 @@ from controller import *
 import serial
 import re
 from datetime import datetime
-import time
 import json
 from threading import Thread
 
@@ -41,13 +41,16 @@ if TOGGLE_SERIAL:
 # global GAME_RUNNING
 GAME_RUNNING = True
 
-# TODO: document this function
-# this function is designed to be run in parallel with game main loop
 def worker():
+    """
+        Worker runs in parallel to the main game.
+        It acquires serial data from the handlebars and formats it to fit a new data format.
+        The new data is then added to an array that will be saved as json file in the end of the session.
+        ENCODER must be global because the game uses this value to update the player's position
+    """
     while GAME_RUNNING:
         global ENCODER
 
-        # data processing
         # data format: string #T,S1,S2,S3,S4,S5,S6@E\n 
         data = ser.readline()
         if data: 
@@ -62,21 +65,24 @@ def worker():
 
             # new data format: JSON Array < {"T": T, S1": S1, "S2": S2, "S3": S3, "S4": S4, "S5": S5, "S6": S6, "E": E} >
             formatted_data = {
-                "T": T,
-                "S1": S1,
-                "S2": S2,
-                "S3": S3,
-                "S4": S4,
-                "S5": S5,
-                "S6": S6,
+                "T": int(T),
+                "S1": int(S1),
+                "S2": int(S2),
+                "S3": int(S3),
+                "S4": int(S4),
+                "S5": int(S5),
+                "S6": int(S6),
                 "E": E
             }
             list_sensors.append(formatted_data)
 
             ENCODER = int(E)
 
-# TODO: document this function
 def end_game():
+    """
+        Function to run when the game ends. 
+        It opens the json file and saves data from the sensors, then closes the game and ends the program.
+    """
     if TOGGLE_SERIAL:
         with open(sensorsJson, 'w') as file:
             end_serial()
@@ -85,19 +91,29 @@ def end_game():
     pygame.quit()
     exit()
 
-### Functions to display FPS in game
+### Functions to display hud in game
 def render(fnt, what, color, where):
-    "Renders the fonts as passed from display_fps"
+    # "Renders the fonts as passed from display_fps"
     text_to_show = fnt.render(what, 0, pygame.Color(color))
+    # TODO: rectangle with transparency to better visualize the hud
     screen.blit(text_to_show, where)
 
-def display_fps():
-    "Data that will be rendered and blitted in _display"
+def display_hud(score, lives):
     render(
-        fonts[0],
-        what=str(int(clock.get_fps())),
-        color="white",
-        where=(10, 5))
+        fonts[1],
+        what="LIVES: {}".format(lives),
+        color="black",
+        where=(15, 5))
+    render(
+        fonts[1],
+        what="FPS: {}".format(int(clock.get_fps())),
+        color="black",
+        where=(300, 5))
+    render(
+        fonts[1],
+        what="SCORE: {}".format(score),
+        color="black",
+        where=(560, 5))
 
 if TOGGLE_SERIAL:
     ### Thread start
@@ -127,85 +143,143 @@ fonts = create_fonts([32, 16, 14, 8])
 """
 def menu():
     background = pygame.transform.scale(pygame.image.load('assets/cloud_bg.png'), (WIDTH, HEIGHT))
-    play_button = pygame.transform.scale(pygame.image.load('assets/start_button.png'), (60, 30))
+    play_button = pygame.transform.scale(pygame.image.load('assets/start_button.png'), (BUTTON_W, BUTTON_H))
     while True:
         screen.blit(background, (0,0))
-        screen.blit(play_button, (300, 200))
+        screen.blit(play_button, (WIDTH/2 - BUTTON_W/2, HEIGHT/2 - BUTTON_H/2))
         pygame.display.flip()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.display.quit()
                 exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.pos[0] in range(300, 360) and event.pos[1] in range(200, 230):
+                if event.pos[0] in range(int(WIDTH/2-BUTTON_W/2), int(WIDTH/2+BUTTON_W/2)) and event.pos[1] in range(int(HEIGHT/2-BUTTON_H/2), int(HEIGHT/2+BUTTON_H/2)):
                     play()
-
 
 def play():
 
     global GAME_RUNNING
+    start = False
 
     if TOGGLE_SERIAL:
         start_serial(ser)
+    
+    coins = []
+    spikes = []
+    winds = []
+    coins_group = pygame.sprite.Group()
+    spikes_group = pygame.sprite.Group()
+    winds_group = pygame.sprite.Group()
+    wind_repeats_x = int(WIDTH/WIND_SIZE)
 
-    x_position = 300
+    # Level builder
+    with open(COINS_CONFIG, 'r') as coins_config:
+        file = json.load(coins_config)
+        for i in file:
+            coin = Coin(i["x"], i["y"])
+            coins.append(coin)
+            coins_group.add(coin)
+    with open(SPIKES_CONFIG, 'r') as spikes_config:
+        file = json.load(spikes_config)
+        for i in file:
+            spike = Spike(i["x"], i["y"])
+            spikes.append(spike)
+            spikes_group.add(spike)
+    with open(WIND_CONFIG, 'r') as wind_config:
+        file = json.load(wind_config)
+        for i in file:
+            wind = Wind(i["y_start"], i["y_end"], i["magnitude"])
+            winds.append(wind)
+            winds_group.add(wind)
+
+    # Player's initial positions
+    x_position = 280
     y_position = 80
+
+    # Scroller's initial positions: background and winds
     y_bg = 0
+    x_bg_wind = [0] * len(winds)
 
     while GAME_RUNNING:
-
-        bg = pygame.transform.scale(pygame.image.load('assets/cloud_bg2.png'), (WIDTH, HEIGHT))
-        ground = pygame.transform.scale(pygame.image.load('assets/ground.png'), (WIDTH, HEIGHT))
-
-        for i in range(BACKGROUND_NUMBER):
-            screen.blit(bg, (0, y_bg + HEIGHT * i))
-        screen.blit(ground, (0, y_bg + HEIGHT * BACKGROUND_NUMBER))
-
-
-        y_bg -= FALL_SPEED
-        
-        if y_bg < -HEIGHT * BACKGROUND_NUMBER:
-            y_bg = -HEIGHT * BACKGROUND_NUMBER
-            y_position += FALL_SPEED
-
-        if y_position > HEIGHT / 2 + 5: # + 5: small adjustment to ground imagea
-            y_position = HEIGHT / 2 + 5
-            time.sleep(0.5) # talvez adicionar uma função indicando fim do jogo graficamente na tela
-            end_game()
-
-            
-
-
-        display_fps()
-
+        # Manage Quit event
         for event in pygame.event.get():
             if event.type == QUIT:
                 GAME_RUNNING = False
                 end_game()
 
-        clock.tick(FPS)
-        dt = clock.tick(FPS) /1000
+        ### BACKGROUND ###
+        bg = pygame.transform.scale(pygame.image.load('assets/cloud_bg.png'), (WIDTH, HEIGHT))
+        ground = pygame.transform.scale(pygame.image.load('assets/ground.png'), (WIDTH, HEIGHT))
 
-        # movimentação
+        # Build background
+        for i in range(BACKGROUND_NUMBER):
+            screen.blit(bg, (0, y_bg + HEIGHT * i))
+        screen.blit(ground, (0, y_bg + HEIGHT * BACKGROUND_NUMBER))
+
+        # Background auto scroller
+        y_bg -= FALL_SPEED
+        if y_bg < -HEIGHT * BACKGROUND_NUMBER:
+            y_bg = -HEIGHT * BACKGROUND_NUMBER
+            y_position += FALL_SPEED
+        if y_position > HEIGHT / 2 - 50: # -50: adjustment to ground image
+            y_position = HEIGHT / 2 - 50
+            time.sleep(0.5) # talvez adicionar uma função indicando fim do jogo graficamente na tela
+            end_game()
+
+        ### SPRITES ###
+        for coin in coins_group:
+            screen.blit(coin.image, (coin.x, coin.y + y_bg))
+        for spike in spikes_group:
+            screen.blit(spike.image, (spike.x, spike.y + y_bg))
+        idx = 0
+        for wind in winds_group:
+            img = wind.image_r if wind.magnitude > 0 else wind.image_l
+            wind_repeats_y = int((wind.y_end - wind.y_start)/WIND_SIZE)
+            # infinite wind x-scroll
+            x_bg_wind[idx] += wind.magnitude
+            for x in range(wind_repeats_x):
+                x_repeats = x*WIND_SIZE + x_bg_wind[idx]/10
+                for y in range(wind_repeats_y):
+                    y_repeats = wind.y_start + y*WIND_SIZE + y_bg
+                    screen.blit(img, (x_repeats, y_repeats))
+                    screen.blit(img, (x_repeats + WIDTH, y_repeats))
+                    screen.blit(img, (x_repeats - WIDTH, y_repeats))
+                if x_bg_wind[idx] <= -WIDTH:
+                    x_bg_wind[idx] = 0
+                if x_bg_wind[idx] >= WIDTH:
+                    x_bg_wind[idx] = 0
+            idx += 1
+
+
+        ### PLAYER ###
+        player = Player(x_position, y_position)
+        screen.blit(player.image, (x_position, y_position))
+
+        # Player movement
         if TOGGLE_SERIAL:
             x_position = x_position - ENCODER * dt
         else:
             if pygame.key.get_pressed()[K_a]:
-                x_position = x_position - 500 * dt
-                
+                x_position = x_position - 500 * dt   
             if pygame.key.get_pressed()[K_d]:
                 x_position = x_position + 500 * dt
-                
-        # keep player inside screen 
+
+        # Keep player inside screen 
         if x_position > WIDTH - PLAYER_W:
             x_position = WIDTH - PLAYER_W
         if x_position < 0:
             x_position = 0
 
+        ### CLOCK and FPS ###
+        clock.tick(FPS)
+        dt = clock.tick(FPS) /1000
+        display_hud(player.score, player.lives)
 
-        pygame.draw.rect(screen, RED, (x_position, y_position, PLAYER_W, PLAYER_H))
-
+        ### UPDATE ###
         pygame.display.flip()
+        if not start:
+            time.sleep(0.5)
+            start = True
 
-
-menu()
+if __name__ == '__main__':
+    menu()

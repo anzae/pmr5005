@@ -1,11 +1,3 @@
-# Colors
-BLACK = (0,0,0)
-WHITE = (255,255,255)
-RED = (255,0,0)
-YELLOW = (255,255,0)
-BLUE = (0,200,255)
-GREEN = (10, 200, 10)
-
 # Control whether the serial port is being used or not. Mostly for test usage
 TOGGLE_SERIAL = False
 
@@ -19,8 +11,23 @@ WIDTH = 640
 HEIGHT = 480
 FPS = 60
 BACKGROUND_NUMBER = 3
+TOTAL_HEIGHT = HEIGHT * (BACKGROUND_NUMBER + 1)
+BUTTON_W = 60
+BUTTON_H = 30
 
 # Player constants
-PLAYER_W = 40
-PLAYER_H = 40
+PLAYER_W = 80
+PLAYER_H = 100
 FALL_SPEED = 5
+
+# Sprite constants
+COIN_SIZE_W = 20
+COIN_SIZE_H = 24
+SPIKE_SIZE = 120
+WIND_SIZE = 40
+
+# Level configs
+LEVEL = 'level_1'
+COINS_CONFIG = '{}/coins.json'.format(LEVEL)
+SPIKES_CONFIG = '{}/spikes.json'.format(LEVEL)
+WIND_CONFIG = '{}/wind.json'.format(LEVEL)

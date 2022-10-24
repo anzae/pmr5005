@@ -13,15 +13,9 @@ def end_serial(serial):
     serial.write("0".encode())
     serial.close()
 
-# testar com o encoder real onde é o zero e onde é o 180 e fazer a conversão direito
-def get_angular_position(encoder):
-    return encoder * 3 / 20
-
 def set_velocity(player, encoder):
-    # nao sei se é assim
-    const = 0.2
-    angular_position = get_angular_position(encoder)
-    player.velx += angular_position * const
+    const = 1.1
+    player.velx += encoder * const
     # depois tem que setar a posição fazendo pos += velocidade * deltaT
 
 def create_fonts(font_sizes_list):
@@ -31,3 +25,48 @@ def create_fonts(font_sizes_list):
         fonts.append(
             pygame.font.SysFont("Arial", size))
     return fonts
+
+class Entity(pygame.sprite.Sprite):
+	def __init__(self):
+		pygame.sprite.Sprite.__init__(self)
+
+class Player(Entity):
+    def __init__(self, x, y):
+        Entity.__init__(self)
+        self.image = pygame.transform.scale(pygame.image.load('assets/player_dog.png'), (PLAYER_W, PLAYER_H))
+        self.x = x
+        self.y = y
+        self.score = 0
+        self.lives = 2
+        self.rect = Rect(x+PLAYER_W/3, y+PLAYER_H*2/5, PLAYER_W/3, PLAYER_H*3/5)
+    # def collide(self, object):
+
+class Coin(Entity):
+    def __init__(self, x, y):
+        Entity.__init__(self)
+        self.image = pygame.transform.scale(pygame.image.load('assets/coin.png'), (COIN_SIZE_W, COIN_SIZE_H))
+        self.x = x
+        self.y = y
+        self.collected = False
+        self.rect = Rect(x, y, COIN_SIZE_W, COIN_SIZE_H)
+
+class Spike(Entity):
+    def __init__(self, x, y):
+        Entity.__init__(self)
+        self.image = pygame.transform.scale(pygame.image.load('assets/spike.png'), (SPIKE_SIZE, SPIKE_SIZE))
+        self.x = x
+        self.y = y
+        self.rect = Rect(x, y, SPIKE_SIZE, SPIKE_SIZE)
+
+class Wind(Entity):
+    def __init__(self, y_start, y_end, magnitude):
+        Entity.__init__(self)
+        # to cover area we need to blit in a loop
+        self.image_l = pygame.transform.scale(pygame.image.load('assets/wind_l.png'), (WIND_SIZE, WIND_SIZE)).convert_alpha()
+        self.image_r = pygame.transform.scale(pygame.image.load('assets/wind_r.png'), (WIND_SIZE, WIND_SIZE)).convert_alpha()
+        self.image_l.set_alpha(30)
+        self.image_r.set_alpha(30)
+        self.y_start = y_start
+        self.y_end = y_end
+        self.magnitude = magnitude
+        self.rect = Rect(0, y_start, WIDTH, y_end)
