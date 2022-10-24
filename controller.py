@@ -13,11 +13,6 @@ def end_serial(serial):
     serial.write("0".encode())
     serial.close()
 
-def set_velocity(x, encoder, dt):
-    x -= encoder * VELOCITY_MULTIPLIER * dt
-    return x
-    # depois tem que setar a posição fazendo pos += velocidade * deltaT
-
 def create_fonts(font_sizes_list):
     "Creates different fonts with one list"
     fonts = []
@@ -67,7 +62,6 @@ class Coin(Entity):
     def update(self):
         if self.collected:
             self.kill()
-
 
 class Spike(Entity):
     def __init__(self, x, y):

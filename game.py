@@ -11,7 +11,6 @@ import serial
 import re
 from datetime import datetime
 import json
-from threading import Thread
 
 if TOGGLE_SERIAL: 
     ### Serial setup
@@ -41,44 +40,6 @@ if TOGGLE_SERIAL:
 
 # global GAME_RUNNING
 GAME_RUNNING = True
-
-def worker():
-    """
-        Worker runs in parallel to the main game.
-        It acquires serial data from the handlebars and formats it to fit a new data format.
-        The new data is then added to an array that will be saved as json file in the end of the session.
-        ENCODER must be global because the game uses this value to update the player's position
-    """
-    while GAME_RUNNING:
-        global ENCODER
-
-        # data format: string #T,S1,S2,S3,S4,S5,S6@E\n 
-        data = ser.readline()
-        if data: 
-            print(data)
-            T = re.findall("#([0-9]+)", str(data))[0]
-            S1 = re.findall(",([0-9]*)", str(data))[0]
-            S2 = re.findall(",([0-9]*)", str(data))[1]
-            S3 = re.findall(",([0-9]*)", str(data))[2]
-            S4 = re.findall(",([0-9]*)", str(data))[3]
-            S5 = re.findall(",([0-9]*)", str(data))[4]
-            S6 = re.findall(",([0-9]*)", str(data))[5]
-            E = re.findall("@(-*[0-9]*\.*[0-9]*)", str(data))[0]
-
-            # new data format: JSON Array < {"T": T, S1": S1, "S2": S2, "S3": S3, "S4": S4, "S5": S5, "S6": S6, "E": E} >
-            formatted_data = {
-                "T": int(T),
-                "S1": int(S1),
-                "S2": int(S2),
-                "S3": int(S3),
-                "S4": int(S4),
-                "S5": int(S5),
-                "S6": int(S6),
-                "E": int(E)
-            }
-            list_sensors.append(formatted_data)
-
-            ENCODER = int(E)
 
 # TODO fix this function
 # wind must have an impedance property and when player collides with wind, variable impedance must be set
@@ -114,20 +75,6 @@ def end_game():
     time.sleep(0.5)
     pygame.quit()
     exit()
-
-# if TOGGLE_SERIAL:
-#     ### Thread start
-#     """
-#         This allows 'worker' to run in parallel with the game
-#         Otherwise the game won't run properly
-#     """
-#     t = Thread(target=worker)
-#     t.daemon = True
-#     t.start()
-
-#     u = Thread(target=impedance)
-#     u.daemon = True
-#     u.start()
 
 ### Functions to display hud in game
 def render(fnt, what, color, where):
@@ -188,6 +135,8 @@ def menu():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.pos[0] in range(int(WIDTH/2-BUTTON_W/2), int(WIDTH/2+BUTTON_W/2)) and event.pos[1] in range(int(HEIGHT/2-BUTTON_H/2), int(HEIGHT/2+BUTTON_H/2)):
                     play()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                play()
 
 def play():
 
@@ -239,6 +188,7 @@ def play():
 
     while GAME_RUNNING:
 
+    ### SERIAL COMMUNICATION ###
         if TOGGLE_SERIAL:
             data = ser.readline()
             if data: 
@@ -249,7 +199,7 @@ def play():
                 S4 = re.findall(",([0-9]*)", str(data))[3]
                 S5 = re.findall(",([0-9]*)", str(data))[4]
                 S6 = re.findall(",([0-9]*)", str(data))[5]
-                E = re.findall("@(-*[0-9]*\.*[0-9]*)", str(data))[0]
+                E = re.findall("@(-*[0-9]*)", str(data))[0]
 
                 # new data format: JSON Array < {"T": T, S1": S1, "S2": S2, "S3": S3, "S4": S4, "S5": S5, "S6": S6, "E": E} >
                 formatted_data = {
@@ -263,16 +213,15 @@ def play():
                     "E": int(E)
                 }
                 list_sensors.append(formatted_data)
-
                 ENCODER = int(E)
 
-        # Manage Quit event
+    ### QUIT EVENT ###
         for event in pygame.event.get():
             if event.type == QUIT:
                 GAME_RUNNING = False
                 end_game()
 
-        ### BACKGROUND ###
+    ### BACKGROUND ###
         bg = pygame.transform.scale(pygame.image.load('assets/cloud_bg.png'), (WIDTH, HEIGHT))
         ground = pygame.transform.scale(pygame.image.load('assets/ground.png'), (WIDTH, HEIGHT))
 
@@ -281,22 +230,23 @@ def play():
             screen.blit(bg, (0, y_bg + HEIGHT * i))
         screen.blit(ground, (0, y_bg + HEIGHT * BACKGROUND_NUMBER))
 
-        ### CLOCK and FPS ###
-        clock.tick(FPS)
-        dt = clock.tick(FPS) /1000
-        game_h = TOTAL_HEIGHT + y_bg - player.y - PLAYER_H - 190 # adjustment to be 0 when player hits the ground
-
         # Background auto scroller
         y_bg -= FALL_SPEED
         if y_bg < -HEIGHT * BACKGROUND_NUMBER:
             y_bg = -HEIGHT * BACKGROUND_NUMBER
             y_position += FALL_SPEED
-        if y_position > HEIGHT / 2 - 50: # -50: adjustment to ground image
-            y_position = HEIGHT / 2 - 50
+            player.rect.y += FALL_SPEED
+        if y_position > HEIGHT / 2 - 20: # adjustment to ground image
+            y_position = HEIGHT / 2 - 20
+            print("Score: ", score)
             time.sleep(0.5) # talvez adicionar uma função indicando fim do jogo graficamente na tela
             end_game()
 
-        ### SPRITES ###
+    ### CLOCK and FPS ###
+        clock.tick(FPS)
+        dt = clock.tick(FPS) /1000
+
+    ### SPRITES ###
         for coin in coins_group:
             screen.blit(coin.image, (coin.x, coin.y + y_bg))
         for spike in spikes_group:
@@ -320,8 +270,7 @@ def play():
                     x_bg_wind[idx] = 0
             idx += 1
 
-        ### PLAYER ###
-
+    ### PLAYER ###
         # Keep player inside screen 
         if x_position > WIDTH - PLAYER_W:
             x_position = WIDTH - PLAYER_W
@@ -339,10 +288,10 @@ def play():
 
         # Game over
         if lives == 0:
+            print("Score: ", score)
             end_game()
 
-
-        ### UPDATE ###
+    ### UPDATE ###
         # Entities update
         wind_collider = False
         player.update(spikes)
@@ -364,15 +313,16 @@ def play():
 
         # Player movement
         if TOGGLE_SERIAL:
-            x_position = set_velocity(x_position, ENCODER, dt) 
+            x_position -= ENCODER * VELOCITY_MULTIPLIER * dt 
         else:
             if pygame.key.get_pressed()[K_a]:
-                x_position = x_position - 500 * dt
+                x_position = x_position - 800 * dt
             if pygame.key.get_pressed()[K_d]:
-                x_position = x_position + 500 * dt 
+                x_position = x_position + 800 * dt 
         x_position += wind_vel
         
         # Game update
+        game_h = TOTAL_HEIGHT + y_bg - y_position - PLAYER_H - 160 # adjustment to be 0 when player hits the ground
         display_hud(score, lives, game_h)
         screen.blit(player.image, (x_position, y_position))
         pygame.display.update()

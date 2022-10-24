@@ -261,8 +261,8 @@ void loop() {
     //tempo total do bloco = 3 us
     //---------------------------/-------------------------
 
-
-  delay(50);
+  // min 1fps + block duration + folga
+  delay(40);
 
   }
 }
