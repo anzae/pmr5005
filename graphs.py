@@ -15,7 +15,7 @@ def graph(file):
     S4 = [key["S4"] for key in data]
     S5 = [key["S5"]for key in data]
     S6 = [key["S6"] for key in data]
-    encoder = [-key["E"] for key in data]
+    encoder = [key["E"] for key in data]
 
     plot1 = go.Scatter(x=time, y=S1, mode='lines', name="Sensor 1")
     plot2 = go.Scatter(x=time, y=S2, mode='lines', name="Sensor 2")
@@ -29,7 +29,7 @@ def graph(file):
     py.offline.plot(graphs)
 
 # edit file name to view the graphs
-file = 'sensors-2022-10-21-10h48.json'
+file = 'sensors-2022-10-24-10h33.json'
 if __name__ == '__main__':
     path = 'results/{}'.format(file)
     graph(path)

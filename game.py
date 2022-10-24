@@ -55,6 +55,7 @@ def worker():
         # data format: string #T,S1,S2,S3,S4,S5,S6@E\n 
         data = ser.readline()
         if data: 
+            print(data)
             T = re.findall("#([0-9]+)", str(data))[0]
             S1 = re.findall(",([0-9]*)", str(data))[0]
             S2 = re.findall(",([0-9]*)", str(data))[1]
@@ -73,7 +74,7 @@ def worker():
                 "S4": int(S4),
                 "S5": int(S5),
                 "S6": int(S6),
-                "E": E
+                "E": int(E)
             }
             list_sensors.append(formatted_data)
 
@@ -108,7 +109,7 @@ def end_game():
     """
     if TOGGLE_SERIAL:
         with open(sensorsJson, 'w') as file:
-            end_serial()
+            end_serial(ser)
             json.dump(list_sensors, file)
     time.sleep(0.5)
     pygame.quit()
@@ -230,12 +231,14 @@ def play():
     # Player's initial positions
     x_position = 280
     y_position = 80
+    player = Player(x_position, y_position)
 
     # Scroller's initial positions: background and winds
     y_bg = 0
     x_bg_wind = [0] * len(winds)
 
     while GAME_RUNNING:
+
         # Manage Quit event
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -250,6 +253,11 @@ def play():
         for i in range(BACKGROUND_NUMBER):
             screen.blit(bg, (0, y_bg + HEIGHT * i))
         screen.blit(ground, (0, y_bg + HEIGHT * BACKGROUND_NUMBER))
+
+        ### CLOCK and FPS ###
+        clock.tick(FPS)
+        dt = clock.tick(FPS) /1000
+        game_h = TOTAL_HEIGHT + y_bg - player.y - PLAYER_H - 190 # adjustment to be 0 when player hits the ground
 
         # Background auto scroller
         y_bg -= FALL_SPEED
@@ -286,7 +294,7 @@ def play():
             idx += 1
 
         ### PLAYER ###
-        player = Player(x_position, y_position)
+        
         screen.blit(player.image, (x_position, y_position))
 
         # Player movement
@@ -317,10 +325,6 @@ def play():
         if lives == 0:
             end_game()
 
-        ### CLOCK and FPS ###
-        clock.tick(FPS)
-        dt = clock.tick(FPS) /1000
-        game_h = TOTAL_HEIGHT + y_bg - player.y - PLAYER_H - 190 # adjustment to be 0 when player hits the ground
 
         ### UPDATE ###
         # Entities update

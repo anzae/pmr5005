@@ -1,5 +1,5 @@
 # Control whether the serial port is being used or not. Mostly for test usage
-TOGGLE_SERIAL = False
+TOGGLE_SERIAL = True
 
 # Serial constants
 # PORT_NAME = input("Port name: ")

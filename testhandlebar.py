@@ -3,11 +3,12 @@ import re
 from datetime import date, datetime, timedelta
 import json
 import time
+from consts import *
 
 
 # port_name = input("Port name: ")
-port_name = "COM3"
-baud_rate = 2000000
+port_name = PORT_NAME
+baud_rate = BAUD_RATE
 
 d = datetime.now()
 date_formatted = '{}-{}-{}-{}h{}'.format(d.year, d.month, d.day, d.hour, d.minute)
@@ -28,7 +29,7 @@ except:
 
 ser.write("1".encode())
 
-while (datetime.now() - t_start).seconds < 5:
+while (datetime.now() - t_start).seconds < 10:
 
     # dados vem na forma de #T,S1,S2,S3,S4,S5,S6@E
     data = ser.readline()
@@ -48,14 +49,14 @@ while (datetime.now() - t_start).seconds < 5:
 
 
         formatted_data = {
-            "s_time": s_time,
-            "S1": S1,
-            "S2": S2,
-            "S3": S3,
-            "S4": S4,
-            "S5": S5,
-            "S6": S6,
-            "encoder": encoder
+            "T": int(s_time),
+            "S1": int(S1),
+            "S2": int(S2),
+            "S3": int(S3),
+            "S4": int(S4),
+            "S5": int(S5),
+            "S6": int(S6),
+            "E": int(encoder)
         }
 
         list_sensors.append(formatted_data)
