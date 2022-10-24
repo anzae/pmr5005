@@ -19,6 +19,8 @@ BUTTON_H = 30
 PLAYER_W = 80
 PLAYER_H = 100
 FALL_SPEED = 5
+SCORE = 0
+LIVES = 2
 
 # Sprite constants
 COIN_SIZE_W = 20

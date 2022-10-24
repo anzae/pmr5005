@@ -37,6 +37,7 @@ if TOGGLE_SERIAL:
     list_sensors = []
 
     ENCODER = 0
+    IMPEDANCE = ''
 
 # global GAME_RUNNING
 GAME_RUNNING = True
@@ -78,6 +79,28 @@ def worker():
 
             ENCODER = int(E)
 
+# TODO fix this function
+# wind must have an impedance property and when player collides with wind, variable impedance must be set
+# when there's no collision, impedance must return to zero ('c')
+def impedance():
+    while GAME_RUNNING:
+        global IMPEDANCE
+
+        # 5 niveis de "impedancia": a, b, c, d, e
+        # a -> -30, b: -15, c-> 0, d-> 15, e: 30
+        # arrumar para o guidão forçar nessas posições
+
+        if IMPEDANCE == 'a':
+            serial.write('a'.encode())
+        if IMPEDANCE == 'b':
+            serial.write('b'.encode())
+        if IMPEDANCE == 'c':
+            serial.write('c'.encode())
+        if IMPEDANCE == 'd':
+            serial.write('d'.encode())
+        if IMPEDANCE == 'e':
+            serial.write('e'.encode())
+
 def end_game():
     """
         Function to run when the game ends. 
@@ -91,30 +114,6 @@ def end_game():
     pygame.quit()
     exit()
 
-### Functions to display hud in game
-def render(fnt, what, color, where):
-    # "Renders the fonts as passed from display_fps"
-    text_to_show = fnt.render(what, 0, pygame.Color(color))
-    # TODO: rectangle with transparency to better visualize the hud
-    screen.blit(text_to_show, where)
-
-def display_hud(score, lives):
-    render(
-        fonts[1],
-        what="LIVES: {}".format(lives),
-        color="black",
-        where=(15, 5))
-    render(
-        fonts[1],
-        what="FPS: {}".format(int(clock.get_fps())),
-        color="black",
-        where=(300, 5))
-    render(
-        fonts[1],
-        what="SCORE: {}".format(score),
-        color="black",
-        where=(560, 5))
-
 if TOGGLE_SERIAL:
     ### Thread start
     """
@@ -124,6 +123,39 @@ if TOGGLE_SERIAL:
     t = Thread(target=worker)
     t.daemon = True
     t.start()
+
+    u = Thread(target=impedance)
+    u.daemon = True
+    u.start()
+
+### Functions to display hud in game
+def render(fnt, what, color, where):
+    # "Renders the fonts as passed from display_fps"
+    text_to_show = fnt.render(what, 0, pygame.Color(color))
+    # TODO: rectangle with transparency to better visualize the hud
+    screen.blit(text_to_show, where)
+
+def display_hud(score, lives, height):
+    render(
+        fonts[1],
+        what="LIVES: {}".format(lives),
+        color="black",
+        where=(15, 5))
+    render(
+        fonts[1],
+        what="FPS: {}".format(int(clock.get_fps())),
+        color="black",
+        where=(200, 5))
+    render(
+        fonts[1],
+        what="Height: {}".format(height),
+        color="black",
+        where=(350, 5))
+    render(
+        fonts[1],
+        what="SCORE: {}".format(score),
+        color="black",
+        where=(560, 5))
 
 ### Initialization and Screen setup
 """
@@ -170,7 +202,10 @@ def play():
     coins_group = pygame.sprite.Group()
     spikes_group = pygame.sprite.Group()
     winds_group = pygame.sprite.Group()
-    wind_repeats_x = int(WIDTH/WIND_SIZE)
+    wind_repeats_x = int(WIDTH/WIND_SIZE)    
+
+    score = SCORE
+    lives = LIVES
 
     # Level builder
     with open(COINS_CONFIG, 'r') as coins_config:
@@ -238,7 +273,7 @@ def play():
             # infinite wind x-scroll
             x_bg_wind[idx] += wind.magnitude
             for x in range(wind_repeats_x):
-                x_repeats = x*WIND_SIZE + x_bg_wind[idx]/10
+                x_repeats = x*WIND_SIZE + x_bg_wind[idx]
                 for y in range(wind_repeats_y):
                     y_repeats = wind.y_start + y*WIND_SIZE + y_bg
                     screen.blit(img, (x_repeats, y_repeats))
@@ -249,7 +284,6 @@ def play():
                 if x_bg_wind[idx] >= WIDTH:
                     x_bg_wind[idx] = 0
             idx += 1
-
 
         ### PLAYER ###
         player = Player(x_position, y_position)
@@ -270,13 +304,39 @@ def play():
         if x_position < 0:
             x_position = 0
 
+        # Change rect attribute
+        player.rect.x = x_position
+        # pygame.draw.rect(screen, "red", player.rect)
+        for coin in coins_group:
+            coin.rect.y -= FALL_SPEED
+        for spike in spikes_group:
+            spike.rect.y -= FALL_SPEED
+        for wind in winds_group:
+            wind.rect.y -= FALL_SPEED
+
+        # Game over
+        if lives == 0:
+            end_game()
+
         ### CLOCK and FPS ###
         clock.tick(FPS)
         dt = clock.tick(FPS) /1000
-        display_hud(player.score, player.lives)
+        game_h = TOTAL_HEIGHT + y_bg - player.y - PLAYER_H - 190 # adjustment to be 0 when player hits the ground
 
         ### UPDATE ###
-        pygame.display.flip()
+        # Entities update
+        player.update(spikes)
+        for coin in coins_group:
+            score = collect_coin(score, player, coin)
+            coin.update()
+        for spike in spikes_group:
+            lives = hit_spike(lives, player, spike)
+        for wind in winds_group:
+            x_position += enter_wind(player, wind)
+        
+        # Game update
+        display_hud(score, lives, game_h)
+        pygame.display.update()
         if not start:
             time.sleep(0.5)
             start = True

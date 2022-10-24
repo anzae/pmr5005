@@ -26,6 +26,23 @@ def create_fonts(font_sizes_list):
             pygame.font.SysFont("Arial", size))
     return fonts
 
+def collect_coin(score, player, coin):
+    if pygame.sprite.collide_rect(player, coin):
+        score += 1
+        coin.collected = True
+    return score
+
+def hit_spike(lives, player, spike):
+    if pygame.sprite.collide_rect(player, spike) and spike.active:
+        lives -= 1
+        spike.active = False
+    return lives
+
+def enter_wind(player, wind):
+    if pygame.sprite.collide_rect(player, wind):
+        return wind.magnitude 
+    return 0
+
 class Entity(pygame.sprite.Sprite):
 	def __init__(self):
 		pygame.sprite.Sprite.__init__(self)
@@ -36,10 +53,7 @@ class Player(Entity):
         self.image = pygame.transform.scale(pygame.image.load('assets/player_dog.png'), (PLAYER_W, PLAYER_H))
         self.x = x
         self.y = y
-        self.score = 0
-        self.lives = 2
-        self.rect = Rect(x+PLAYER_W/3, y+PLAYER_H*2/5, PLAYER_W/3, PLAYER_H*3/5)
-    # def collide(self, object):
+        self.rect = Rect(x-PLAYER_W, y+PLAYER_H*2/5, PLAYER_W, PLAYER_H*3/5)
 
 class Coin(Entity):
     def __init__(self, x, y):
@@ -48,7 +62,12 @@ class Coin(Entity):
         self.x = x
         self.y = y
         self.collected = False
-        self.rect = Rect(x, y, COIN_SIZE_W, COIN_SIZE_H)
+        self.rect = Rect(x, y, COIN_SIZE_W, COIN_SIZE_H)      
+
+    def update(self):
+        if self.collected:
+            self.kill()
+
 
 class Spike(Entity):
     def __init__(self, x, y):
@@ -56,6 +75,7 @@ class Spike(Entity):
         self.image = pygame.transform.scale(pygame.image.load('assets/spike.png'), (SPIKE_SIZE, SPIKE_SIZE))
         self.x = x
         self.y = y
+        self.active = True
         self.rect = Rect(x, y, SPIKE_SIZE, SPIKE_SIZE)
 
 class Wind(Entity):
@@ -69,4 +89,4 @@ class Wind(Entity):
         self.y_start = y_start
         self.y_end = y_end
         self.magnitude = magnitude
-        self.rect = Rect(0, y_start, WIDTH, y_end)
+        self.rect = Rect(0, y_start, WIDTH, y_end-y_start)
