@@ -1,4 +1,3 @@
-from tkinter import E
 import plotly.offline as py
 import plotly.graph_objs as go
 import json

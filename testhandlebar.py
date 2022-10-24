@@ -2,11 +2,8 @@ import serial
 import re
 from datetime import date, datetime, timedelta
 import json
-import time
 from consts import *
 
-
-# port_name = input("Port name: ")
 port_name = PORT_NAME
 baud_rate = BAUD_RATE
 
@@ -15,8 +12,6 @@ date_formatted = '{}-{}-{}-{}h{}'.format(d.year, d.month, d.day, d.hour, d.minut
 sensorsJson = "results/sensors-" + date_formatted + ".json"  
 
 list_sensors = []
-
-
 
 t_start = datetime.now()
 
@@ -47,7 +42,6 @@ while (datetime.now() - t_start).seconds < 10:
         S6 = re.findall(",([0-9]*\.*[0-9]*)", str(data))[5]
         encoder = re.findall("@(-*[0-9]*\.*[0-9]*)", str(data))[0]
 
-
         formatted_data = {
             "T": int(s_time),
             "S1": int(S1),
@@ -61,7 +55,6 @@ while (datetime.now() - t_start).seconds < 10:
 
         list_sensors.append(formatted_data)
         
-
     with open(sensorsJson, 'w') as file:       
         json.dump(list_sensors, file)
 

@@ -2,7 +2,6 @@
 TOGGLE_SERIAL = True
 
 # Serial constants
-# PORT_NAME = input("Port name: ")
 PORT_NAME = "COM10"
 BAUD_RATE = 2000000
 
