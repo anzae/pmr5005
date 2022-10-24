@@ -53,7 +53,7 @@ class Player(Entity):
         self.image = pygame.transform.scale(pygame.image.load('assets/player_dog.png'), (PLAYER_W, PLAYER_H))
         self.x = x
         self.y = y
-        self.rect = Rect(x-PLAYER_W, y+PLAYER_H*2/5, PLAYER_W, PLAYER_H*3/5)
+        self.rect = Rect(x + PLAYER_W/3 + 2, y+PLAYER_H*2/5, PLAYER_W/3, PLAYER_H*3/5)
 
 class Coin(Entity):
     def __init__(self, x, y):

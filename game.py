@@ -304,9 +304,9 @@ def play():
         if x_position < 0:
             x_position = 0
 
-        # Change rect attribute
-        player.rect.x = x_position
-        # pygame.draw.rect(screen, "red", player.rect)
+        # Change rect attributes
+        player.rect.x = x_position + PLAYER_W/3 + 2
+        pygame.draw.rect(screen, "red", player.rect)
         for coin in coins_group:
             coin.rect.y -= FALL_SPEED
         for spike in spikes_group:
