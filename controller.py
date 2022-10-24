@@ -13,9 +13,9 @@ def end_serial(serial):
     serial.write("0".encode())
     serial.close()
 
-def set_velocity(player, encoder):
-    const = 1.1
-    player.velx += encoder * const
+def set_velocity(x, encoder, dt):
+    x -= encoder * VELOCITY_MULTIPLIER * dt
+    return x
     # depois tem que setar a posição fazendo pos += velocidade * deltaT
 
 def create_fonts(font_sizes_list):
@@ -40,8 +40,8 @@ def hit_spike(lives, player, spike):
 
 def enter_wind(player, wind):
     if pygame.sprite.collide_rect(player, wind):
-        return wind.magnitude 
-    return 0
+        return True
+    return False
 
 class Entity(pygame.sprite.Sprite):
 	def __init__(self):

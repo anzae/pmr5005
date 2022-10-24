@@ -29,7 +29,7 @@ def graph(file):
     py.offline.plot(graphs)
 
 # edit file name to view the graphs
-file = 'sensors-2022-10-24-10h33.json'
+file = 'sensors-2022-10-24-11h15.json'
 if __name__ == '__main__':
     path = 'results/{}'.format(file)
     graph(path)

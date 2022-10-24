@@ -208,6 +208,7 @@ void loop() {
     // Lê posição atual
     read_pos();
     pos_encoder = ((count*0.005)/180)*3.14156;//((count)/200.0)*3.14156; <- para outro motor com encoder diferente
+    // pos_encoder = count;
 
 
     /** ----- 2. CALC -----**/
@@ -237,9 +238,9 @@ void loop() {
     SerialUSB.print("#");
     SerialUSB.print((tempo-t_start));
     SerialUSB.print(",");
-    SerialUSB.print(RSTN);
+    SerialUSB.print(sensor1);
     SerialUSB.print(",");
-    SerialUSB.print(count);
+    SerialUSB.print(sensor2);
     SerialUSB.print(",");
     SerialUSB.print(sensor3);
     SerialUSB.print(",");
@@ -249,7 +250,7 @@ void loop() {
     SerialUSB.print(",");
     SerialUSB.print(sensor6);
     SerialUSB.print("@");
-    SerialUSB.print(pos_encoder);
+    SerialUSB.print(count);
     SerialUSB.print("\n");
     //Bloc duration = 462us
     //---------------------------/-------------------------
