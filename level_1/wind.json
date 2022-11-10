@@ -2,12 +2,12 @@
     {
         "y_start": 300,
         "y_end": 540,
-        "magnitude": 6
+        "magnitude": 4
     },
     {
         "y_start": 720,
         "y_end": 920,
-        "magnitude": -7
+        "magnitude": -2
     },
     {
         "y_start": 1120,
@@ -17,6 +17,6 @@
     {
         "y_start": 1400,
         "y_end": 1520,
-        "magnitude": -9
+        "magnitude": -3
     }
 ]

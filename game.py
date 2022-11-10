@@ -186,13 +186,18 @@ def play():
     y_bg = 0
     x_bg_wind = [0] * len(winds)
 
+    # Background
+    bg = pygame.transform.scale(pygame.image.load('assets/cloud_bg.png'), (WIDTH, HEIGHT))
+    ground = pygame.transform.scale(pygame.image.load('assets/ground.png'), (WIDTH, HEIGHT))
+
+### MAIN LOOP ###
     while GAME_RUNNING:
 
     ### SERIAL COMMUNICATION ###
         if TOGGLE_SERIAL:
             data = ser.readline()
             if data: 
-                data_sensors = re.findall(",([0-9]*)", str(data))
+                data_sensors = re.findall(",-*([0-9]*)", str(data))
                 T = re.findall("#([0-9]+)", str(data))[0]
                 S1 = data_sensors[0]
                 S2 = data_sensors[1]
@@ -223,9 +228,6 @@ def play():
                 end_game()
 
     ### BACKGROUND ###
-        bg = pygame.transform.scale(pygame.image.load('assets/cloud_bg.png'), (WIDTH, HEIGHT))
-        ground = pygame.transform.scale(pygame.image.load('assets/ground.png'), (WIDTH, HEIGHT))
-
         # Build background
         for i in range(BACKGROUND_NUMBER):
             screen.blit(bg, (0, y_bg + HEIGHT * i))

@@ -34,7 +34,7 @@ while (datetime.now() - t_start).seconds < 10:
         print(data)
         
         s_time = re.findall("#([0-9]+)", str(data))[0]
-        data_sensors = re.findall(",([0-9]*)", str(data))
+        data_sensors = re.findall(",-*([0-9]*)", str(data))
         S1 = data_sensors[0]
         S2 = data_sensors[1]
         S3 = data_sensors[2]
