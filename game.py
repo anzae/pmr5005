@@ -192,13 +192,14 @@ def play():
         if TOGGLE_SERIAL:
             data = ser.readline()
             if data: 
+                data_sensors = re.findall(",([0-9]*)", str(data))
                 T = re.findall("#([0-9]+)", str(data))[0]
-                S1 = re.findall(",([0-9]*)", str(data))[0]
-                S2 = re.findall(",([0-9]*)", str(data))[1]
-                S3 = re.findall(",([0-9]*)", str(data))[2]
-                S4 = re.findall(",([0-9]*)", str(data))[3]
-                S5 = re.findall(",([0-9]*)", str(data))[4]
-                S6 = re.findall(",([0-9]*)", str(data))[5]
+                S1 = data_sensors[0]
+                S2 = data_sensors[1]
+                S3 = data_sensors[2]
+                S4 = data_sensors[3]
+                S5 = data_sensors[4]
+                S6 = data_sensors[5]
                 E = re.findall("@(-*[0-9]*)", str(data))[0]
 
                 # new data format: JSON Array < {"T": T, S1": S1, "S2": S2, "S3": S3, "S4": S4, "S5": S5, "S6": S6, "E": E} >
