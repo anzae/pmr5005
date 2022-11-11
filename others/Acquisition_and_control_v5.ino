@@ -95,7 +95,7 @@ uint32_t sensor5 = 0;
 uint32_t sensor6 = 0;
 uint32_t tempo = 0;
 unsigned long t_start = 0; //tempo do contador no início do experimento (utilizado para cálculo do tempo do experimento)
-unsigned int start_flag = 0; //indica o início do experimento - arduíno inicía coleta de dados
+unsigned int start_flag = 48; //indica o início do experimento - arduíno inicía coleta de dados
 
 // Para a QUADRATURA
 unsigned long result_LSB_new;
@@ -129,11 +129,9 @@ double control;
 //Impedância teste
 //double I_c = 
 
-double I_c = 0.000001;//0.00012;//0.00006;//0.000006;//0.00006;//0.0006;//0.006;//0.15;//0.000001;
+double I_c = 0;//0.00012;//0.00006;//0.000006;//0.00006;//0.0006;//0.006;//0.15;//0.000001;
 double B_c = 0.000001;//0.00004;//0.002;//0.000002;//0.00002;//0.0002;//0.002;//0.05;//0.000001;
 double K_c = 0.000001;//0.0002;//0.000004;//0.00004;//0.0004;//0.004;//0.02;//0.000001;
-
-
 
 double x_0 = 0;
 double I = 0.00003;
@@ -184,6 +182,12 @@ int acc=0;
 unsigned long t1=0; 
 unsigned long t2=0;
 double sinal;
+
+
+long tempo_teste = 0;
+long tempo_teste2 = 0;
+
+int constante_multiplicativa_magica = 1;
 
 
 // Definições
@@ -283,7 +287,37 @@ void loop() {
  
   while (start_flag!=48){
 
-    delay(40);
+
+    if (millis() - tempo_teste > 40) {
+      tempo_teste = millis();
+      SerialUSB.print("#");
+      SerialUSB.print((tempo));
+      SerialUSB.print(",");
+      SerialUSB.print(sensor1);//avv);
+      SerialUSB.print(",");
+      SerialUSB.print(sensor2);//T/100000.0);
+      SerialUSB.print(",");
+      SerialUSB.print(sensor3);
+      SerialUSB.print(",");
+      SerialUSB.print(sensor4);
+      SerialUSB.print(",");
+      SerialUSB.print(sensor5);
+      SerialUSB.print(",");
+      SerialUSB.print(sensor6);
+      SerialUSB.print("@");
+      SerialUSB.print(count);
+      SerialUSB.print("\n");
+    }
+
+
+    // if (millis() - tempo_teste2 > 2000) {
+    //   I_c = -I_c;
+    //   tempo_teste2 = millis();
+    // }
+
+
+
+    // delay(2);
     // Para o ADC
     //Acquisition Bloc -----------------------------------
     sensor1 = anaRead(A0);
@@ -340,8 +374,16 @@ void loop() {
     a = I_c/(td_1*td_1);
     b = B_c/(td_1);
 
-    x = (((T/100000.0) + (x_1*((2*a)+b)) - (x_2*a) + (K_c*x_0)) / (a+b+K_c))*1000.0;
+    x = (((T/100000.0) + (x_1*((2*a)+b)) - (x_2*a) - (K_c*x_0)) / (a+b-K_c))*1000.0;
+    
+    if (x > 180) {
+      x = 180;
+    }
 
+    if (x < -270) {
+      x = -270;
+    }
+  
     // subtract the last reading:
     totals = totals - readingss[readIndexs];;
     // read from the sensor:
@@ -362,7 +404,7 @@ void loop() {
 
     x_2 = x_1;
     x_1 = avv;
-    avv = averages/1000.0;
+    avv = averages/1000.0 * constante_multiplicativa_magica;
 
     myPid.setSetPoint(avv);
 
@@ -376,9 +418,13 @@ void loop() {
     // Calcula ganho baseado nas constantes do controlador e no erro medido
     control = myPid.process();
 
-//    if (control>120){
-//      control = 120;
-//    } 
+   if (control>120){
+     control = 120;
+   } 
+
+   if (control < -120) {
+     control = -120;
+   }
 
 
     /** ----- 4. ACT PID -----**/
@@ -393,23 +439,23 @@ void loop() {
 
     // Para o envio de informação
     //Send Information Bloc -------------------------------
-    SerialUSB.print("#");
-    SerialUSB.print((tempo));
-    SerialUSB.print(",");
-    SerialUSB.print(sensor1);//avv);
-    SerialUSB.print(",");
-    SerialUSB.print(sensor2);//T/100000.0);
-    SerialUSB.print(",");
-    SerialUSB.print(sensor3);
-    SerialUSB.print(",");
-    SerialUSB.print(sensor4);
-    SerialUSB.print(",");
-    SerialUSB.print(sensor5);
-    SerialUSB.print(",");
-    SerialUSB.print(sensor6);
-    SerialUSB.print("@");
-    SerialUSB.print(count);
-    SerialUSB.print("\n");
+    // SerialUSB.print("#");
+    // SerialUSB.print((tempo));
+    // SerialUSB.print(",");
+    // SerialUSB.print(sensor1);//avv);
+    // SerialUSB.print(",");
+    // SerialUSB.print(sensor2);//T/100000.0);
+    // SerialUSB.print(",");
+    // SerialUSB.print(sensor3);
+    // SerialUSB.print(",");
+    // SerialUSB.print(sensor4);
+    // SerialUSB.print(",");
+    // SerialUSB.print(sensor5);
+    // SerialUSB.print(",");
+    // SerialUSB.print(sensor6);
+    // SerialUSB.print("@");
+    // SerialUSB.print(count);
+    // SerialUSB.print("\n");
     //Bloc duration = 462us
     //---------------------------/-------------------------
 
@@ -422,16 +468,18 @@ void loop() {
     // impedância sentido anti-horário
     if (start_flag == 50) { // número 2 na serial
       I_c = 0.000001;;
+      constante_multiplicativa_magica = 0;
     }
 
     // impedância sentido horário
     if (start_flag == 51) { // número 3 na serial
       I_c = -0.000001;
+      constante_multiplicativa_magica = 1;
     }
 
     // impedância no zero
     if (start_flag == 52) { // número 4 na serial
-      I_c = 0;
+      constante_multiplicativa_magica = 0;
     }
   }
 }

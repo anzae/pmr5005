@@ -43,7 +43,7 @@ GAME_RUNNING = True
 # TODO fix this function
 # wind must have an impedance property and when player collides with wind, variable impedance must be set
 # when there's no collision, impedance must return to zero 
-def impedance(impedance):
+def impedance(impedance, ser):
 
     # 3 niveis de "impedancia": left, right, zero
     # o guidão empurra para a esquerda ou para direita dependendo do vento
@@ -51,11 +51,14 @@ def impedance(impedance):
     if TOGGLE_SERIAL:
 
         if impedance == 'left':
-            serial.write('2'.encode())
+            print('impedance left')
+            ser.write('2'.encode())
         if impedance == 'right':
-            serial.write('3'.encode())
+            print('impedance right')
+            ser.write('3'.encode())
         if impedance == 'zero':
-            serial.write('4'.encode())
+            print('impedance zero')
+            ser.write('4'.encode())
 
 def end_game():
     """
@@ -195,6 +198,7 @@ def play():
         if TOGGLE_SERIAL:
             data = ser.readline()
             if data: 
+                print(data)
                 data_sensors = re.findall(",-*([0-9]*)", str(data))
                 T = re.findall("#([0-9]+)", str(data))[0]
                 S1 = data_sensors[0]
@@ -317,10 +321,10 @@ def play():
             flag_start = 1
             if wind_mag > 0 and flag_end:
                 flag_end = 0
-                impedance('right')
+                impedance('right', ser)
             if wind_mag < 0 and flag_end:
                 flag_end = 0
-                impedance('left')
+                impedance('left', ser)
             # Até aqui, e...
         else:
             wind_vel = 0
@@ -328,7 +332,7 @@ def play():
             if flag_start:
                 flag_start = 0
                 flag_end = 1
-                impedance('zero')
+                impedance('zero', ser)
             # Até aqui.
 
         wind_collider = False
