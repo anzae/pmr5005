@@ -36,32 +36,26 @@ if TOGGLE_SERIAL:
     list_sensors = []
 
     ENCODER = 0
-    IMPEDANCE = ''
 
 # global GAME_RUNNING
 GAME_RUNNING = True
 
 # TODO fix this function
 # wind must have an impedance property and when player collides with wind, variable impedance must be set
-# when there's no collision, impedance must return to zero ('c')
-def impedance():
-    while GAME_RUNNING:
-        global IMPEDANCE
+# when there's no collision, impedance must return to zero 
+def impedance(impedance):
 
-        # 5 niveis de "impedancia": a, b, c, d, e
-        # a -> -30, b: -15, c-> 0, d-> 15, e: 30
-        # arrumar para o guidão forçar nessas posições
+    # 3 niveis de "impedancia": left, right, zero
+    # o guidão empurra para a esquerda ou para direita dependendo do vento
 
-        if IMPEDANCE == 'a':
-            serial.write('a'.encode())
-        if IMPEDANCE == 'b':
-            serial.write('b'.encode())
-        if IMPEDANCE == 'c':
-            serial.write('c'.encode())
-        if IMPEDANCE == 'd':
-            serial.write('d'.encode())
-        if IMPEDANCE == 'e':
-            serial.write('e'.encode())
+    if TOGGLE_SERIAL:
+
+        if impedance == 'left':
+            serial.write('2'.encode())
+        if impedance == 'right':
+            serial.write('3'.encode())
+        if impedance == 'zero':
+            serial.write('4'.encode())
 
 def end_game():
     """
@@ -190,6 +184,10 @@ def play():
     bg = pygame.transform.scale(pygame.image.load('assets/cloud_bg.png'), (WIDTH, HEIGHT))
     ground = pygame.transform.scale(pygame.image.load('assets/ground.png'), (WIDTH, HEIGHT))
 
+    # Impedance flag
+    flag_start = 0
+    flag_end = 1
+
 ### MAIN LOOP ###
     while GAME_RUNNING:
 
@@ -307,10 +305,31 @@ def play():
             if enter_wind(wind, player):
                 wind_collider = True
                 wind_mag = wind.magnitude
+
+        # Sobre as flags: a ideia é que, quando começar o vento, ative a flag start, escreva na serial apenas 1 vez o lado do vento, e desative a flag end
+        # Quando sair da região do vento (wind collider false), desativa a flag start e ativa a flag end, indicando que terminou o vento
+        # Vamos ver se funciona...
+
         if wind_collider: 
             wind_vel = wind_mag
+
+            # Adicionado a partir daqui...
+            flag_start = 1
+            if wind_mag > 0 and flag_end:
+                flag_end = 0
+                impedance('right')
+            if wind_mag < 0 and flag_end:
+                flag_end = 0
+                impedance('left')
+            # Até aqui, e...
         else:
             wind_vel = 0
+            # Daqui...
+            if flag_start:
+                flag_start = 0
+                flag_end = 1
+                impedance('zero')
+            # Até aqui.
 
         wind_collider = False
 
