@@ -340,7 +340,7 @@ def play():
 
         # Player movement
         if TOGGLE_SERIAL:
-            x_position = 320 * ENCODER * math.tan(45 * ENCODER / 200)
+            x_position = 320 * ENCODER * math.tan(0.18 * ENCODER)
         else:
             if pygame.key.get_pressed()[K_a]:
                 x_position = x_position - 800 * dt
