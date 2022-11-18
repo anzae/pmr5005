@@ -5,6 +5,7 @@ from sys import exit
 import time
 from consts import * 
 from controller import *
+import math
 
 # Data acquisition imports
 import serial
@@ -249,7 +250,7 @@ def play():
 
     ### SPRITES ###
         for coin in coins_group:
-            screen.blit(coin.image, (coin.x, coin.y + y_bg))
+            screen.blit(coin.image, (coin.x - 8, coin.y - 9 + y_bg))
         for spike in spikes_group:
             screen.blit(spike.image, (spike.x, spike.y + y_bg))
         idx = 0
@@ -335,7 +336,7 @@ def play():
 
         # Player movement
         if TOGGLE_SERIAL:
-            x_position -= ENCODER * VELOCITY_MULTIPLIER * dt 
+            x_position = 320 * ENCODER * math.tan(45 * ENCODER / 200)
         else:
             if pygame.key.get_pressed()[K_a]:
                 x_position = x_position - 800 * dt

@@ -1,5 +1,5 @@
 # Control whether the serial port is being used or not. Mostly for test usage
-TOGGLE_SERIAL = True
+TOGGLE_SERIAL = False
 
 # Serial constants
 PORT_NAME = "COM10"
@@ -9,7 +9,7 @@ BAUD_RATE = 2000000
 WIDTH = 640
 HEIGHT = 480
 FPS = 60
-BACKGROUND_NUMBER = 3
+BACKGROUND_NUMBER = 5
 TOTAL_HEIGHT = HEIGHT * (BACKGROUND_NUMBER + 1)
 BUTTON_W = 60
 BUTTON_H = 30
@@ -29,7 +29,7 @@ SPIKE_SIZE = 120
 WIND_SIZE = 40
 
 # Level configs
-LEVEL = 'level_1'
+LEVEL = 'level_2'
 COINS_CONFIG = '{}/coins.json'.format(LEVEL)
 SPIKES_CONFIG = '{}/spikes.json'.format(LEVEL)
 WIND_CONFIG = '{}/wind.json'.format(LEVEL)
