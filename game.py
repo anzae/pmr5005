@@ -52,13 +52,10 @@ def impedance(impedance, ser):
     if TOGGLE_SERIAL:
 
         if impedance == 'left':
-            print('impedance left')
             ser.write('2'.encode())
         if impedance == 'right':
-            print('impedance right')
             ser.write('3'.encode())
         if impedance == 'zero':
-            print('impedance zero')
             ser.write('4'.encode())
 
 def end_game():
@@ -199,7 +196,6 @@ def play():
         if TOGGLE_SERIAL:
             data = ser.readline()
             if data: 
-                print(data)
                 data_sensors = re.findall(",-*([0-9]*)", str(data))
                 T = re.findall("#([0-9]+)", str(data))[0]
                 S1 = data_sensors[0]
@@ -316,18 +312,21 @@ def play():
         # Vamos ver se funciona...
 
         if wind_collider: 
-            wind_vel = wind_mag
+            wind_vel = wind_mag * (pygame.time.get_ticks() - deltaWind) / 100
 
             # Adicionado a partir daqui...
             flag_start = 1
             if wind_mag > 0 and flag_end:
                 flag_end = 0
+                deltaWind = pygame.time.get_ticks()
                 impedance('right', ser)
             if wind_mag < 0 and flag_end:
                 flag_end = 0
+                deltaWind = pygame.time.get_ticks()
                 impedance('left', ser)
             # Até aqui, e...
         else:
+            deltaWind = 0
             wind_vel = 0
             # Daqui...
             if flag_start:
@@ -340,13 +339,14 @@ def play():
 
         # Player movement
         if TOGGLE_SERIAL:
-            x_position = 320 * ENCODER * math.tan(0.18 * ENCODER)
+            x_position = 320 + 320 * (0.18 * -ENCODER /45) + 6
         else:
             if pygame.key.get_pressed()[K_a]:
                 x_position = x_position - 800 * dt
             if pygame.key.get_pressed()[K_d]:
                 x_position = x_position + 800 * dt 
-        x_position += wind_vel
+        print(wind_vel)
+        x_position += wind_vel 
         
         # Game update
         game_h = TOTAL_HEIGHT + y_bg - y_position - PLAYER_H - 160 # adjustment to be 0 when player hits the ground
