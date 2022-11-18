@@ -31,11 +31,7 @@ def graph(file):
     py.offline.plot(graphs)
 
 # edit file name to view the graphs
-# 10h24 e 10h54 testes iniciais que funcionaram
-# 11h29 configuração para mapear posição angular
-# 13h12 teste com o jogo funcionando
-
-file = 'sensors-2022-10-24-13h12.json'
+file = 'sensors-2022-11-11-10h59.json'
 if __name__ == '__main__':
     path = 'results/{}'.format(file)
     graph(path)
