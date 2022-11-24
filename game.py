@@ -59,7 +59,7 @@ def impedance(impedance, ser):
             ser.write('3'.encode())
         if impedance == 'zero':
             print('impedance zero')
-            ser.write('4'.encode())
+            ser.write('1'.encode())
 
 def end_game():
     """
