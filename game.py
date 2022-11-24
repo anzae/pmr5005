@@ -345,7 +345,6 @@ def play():
                 x_position = x_position - 800 * dt
             if pygame.key.get_pressed()[K_d]:
                 x_position = x_position + 800 * dt 
-        print(windV)
         x_position += wind_vel 
         
         # Game update

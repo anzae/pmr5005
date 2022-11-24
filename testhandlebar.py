@@ -45,8 +45,8 @@ while (datetime.now() - t_start).seconds < 10:
 
         formatted_data = {
             "T": int(s_time),
-            "S1": int(S1),
-            "S2": int(S2),
+            "S1": float(S1),
+            "S2": float(S2),
             "S3": int(S3),
             "S4": int(S4),
             "S5": int(S5),

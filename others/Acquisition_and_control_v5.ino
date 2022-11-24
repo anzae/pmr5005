@@ -71,7 +71,7 @@ class PID{
 
 
     // Soma tudo
-    pid = abs(((P + I + D)/1.0)*238)+17;
+    pid = (P + I + D)*238;
 
     return pid;
   }
@@ -95,7 +95,7 @@ uint32_t sensor5 = 0;
 uint32_t sensor6 = 0;
 uint32_t tempo = 0;
 unsigned long t_start = 0; //tempo do contador no início do experimento (utilizado para cálculo do tempo do experimento)
-unsigned int start_flag = 0; //indica o início do experimento - arduíno inicía coleta de dados
+unsigned int start_flag = 48; //indica o início do experimento - arduíno inicía coleta de dados
 
 // Para a QUADRATURA
 unsigned long result_LSB_new;
@@ -116,9 +116,9 @@ double control;
 // Para o CTRL DE IMPEDÂNCIA
 
 // Baixa Impedância
-//  double I_c = 0.000052;
-//  double B_c = 0.00001;
-//  double K_c = 0.0002;
+ double I_c = 0.000052;
+ double B_c = 0.00001;
+ double K_c = 0.0002;
 
 // Alta Impedância
 //double I_c = -0.0013;
@@ -129,9 +129,9 @@ double control;
 //Impedância teste
 //double I_c = 
 
-double I_c = 0.000001;//0.00012;//0.00006;//0.000006;//0.00006;//0.0006;//0.006;//0.15;//0.000001;
-double B_c = 0.000001;//0.00004;//0.002;//0.000002;//0.00002;//0.0002;//0.002;//0.05;//0.000001;
-double K_c = 0.000001;//0.0002;//0.000004;//0.00004;//0.0004;//0.004;//0.02;//0.000001;
+// double I_c = 0.000001;//0.00012;//0.00006;//0.000006;//0.00006;//0.0006;//0.006;//0.15;//0.000001;
+// double B_c = 0.000001;//0.00004;//0.002;//0.000002;//0.00002;//0.0002;//0.002;//0.05;//0.000001;
+// double K_c = 0.000001;//0.0002;//0.000004;//0.00004;//0.0004;//0.004;//0.02;//0.000001;
 
 
 
@@ -160,7 +160,7 @@ double a = 0;
 double b = 0;
 
 // Para a MÉDIA MÓVEL
-const int numReadings = 250; // tamanho da média móvel
+const int numReadings = 10; // tamanho da média móvel
 signed int readings[numReadings]; // vetor com medidas para cálculo da média móvel
 signed int teste;
 signed int teste2;
@@ -170,7 +170,7 @@ signed int total = 0; // soma total dos valores medidos
 signed int average = 0; // média
 
 // Para a MÉDIA MÓVEL de X
-const int numReadingss = 50;//12; // tamanho da média móvel
+const int numReadingss = 10;//12; // tamanho da média móvel
 signed int readingss[numReadingss]; // vetor com medidas para cálculo da média móvel
 int readIndexs = 0; // indice da medida atual de força
 signed int totals = 0; // soma total dos valores medidos
@@ -185,7 +185,7 @@ unsigned long t1=0;
 unsigned long t2=0;
 double sinal;
 unsigned long tempoSerial = 0;
-int tempoDelay = 40;
+int tempoDelay = 10;
 
 // Definições
 //RESET - zera a leitura do encoder
@@ -312,11 +312,8 @@ void loop() {
 
     // subtract the last reading:
     total = total - readings[readIndex];
-    // read from the sensor:
-    teste = sensor2;//sensor3 + sensor4 - 8192;
-    teste2 = -(sensor6-4096);
-    teste3 = -(sensor1-4096);
-    readings[readIndex] = 1.0*teste + 0.0*teste2 + 0.0*teste3;//(sensor4 - 4096);
+    // read from the sensor
+    readings[readIndex] = sensor2;
 
     //readings[readIndex] = (sensor3 - 4096)+(4096 - sensor2)/100.0;
     // add the reading to the total:
@@ -404,8 +401,8 @@ void loop() {
     // Para o envio de informação
     //Send Information Bloc -------------------------------
 
-    if (millis() - tempoSerial >= tempoDelay) {
 
+      delay(40);
       tempoSerial = millis();
 
       SerialUSB.print("#");
@@ -413,9 +410,9 @@ void loop() {
       SerialUSB.print(",");
       SerialUSB.print(avv);
       SerialUSB.print(",");
-      SerialUSB.print(sensor2);
+      SerialUSB.print(x);
       SerialUSB.print(",");
-      SerialUSB.print(sensor3);
+      SerialUSB.print(control);
       SerialUSB.print(",");
       SerialUSB.print(sensor4);
       SerialUSB.print(",");
@@ -425,7 +422,7 @@ void loop() {
       SerialUSB.print("@");
       SerialUSB.print(count);
       SerialUSB.print("\n");
-    }
+    
     //Bloc duration = 462us
     //---------------------------/-------------------------
 
