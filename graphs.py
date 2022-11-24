@@ -16,7 +16,7 @@ def graph(file):
     S5 = [key["S5"]for key in data]
     S6 = [key["S6"] for key in data]
     encoder = [key["E"] for key in data]
-    encoder_angular = [e*45/200 for e in encoder]
+    encoder_angular = [e * 0.18 for e in encoder]
 
     plot1 = go.Scatter(x=time, y=S1, mode='lines', name="Sensor 1")
     plot2 = go.Scatter(x=time, y=S2, mode='lines', name="Sensor 2")
