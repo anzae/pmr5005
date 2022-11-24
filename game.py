@@ -38,7 +38,7 @@ if TOGGLE_SERIAL:
 
     ENCODER = 0
 
-# global GAME_RUNNING
+# global GAME_RUNNING 
 GAME_RUNNING = True
 
 # TODO fix this function
@@ -312,7 +312,7 @@ def play():
         # Vamos ver se funciona...
 
         if wind_collider: 
-            wind_vel = wind_mag * (pygame.time.get_ticks() - deltaWind) / 100
+            wind_vel = wind_mag * (pygame.time.get_ticks() - deltaWind) / 1000
 
             # Adicionado a partir daqui...
             flag_start = 1
@@ -345,7 +345,7 @@ def play():
                 x_position = x_position - 800 * dt
             if pygame.key.get_pressed()[K_d]:
                 x_position = x_position + 800 * dt 
-        print(wind_vel)
+        print(windV)
         x_position += wind_vel 
         
         # Game update
