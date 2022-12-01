@@ -22,7 +22,7 @@ except:
     print("Nao foi possivel abrir a porta serial")
     exit()
 
-ser.write("1".encode())
+ser.write(b'1')
 
 while (datetime.now() - t_start).seconds < 10:
 

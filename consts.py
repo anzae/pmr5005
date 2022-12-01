@@ -2,7 +2,7 @@
 TOGGLE_SERIAL = True
 
 # Serial constants
-PORT_NAME = "COM10"
+PORT_NAME = "COM3"
 BAUD_RATE = 2000000
 
 # Game constants

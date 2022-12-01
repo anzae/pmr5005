@@ -52,11 +52,11 @@ def impedance(impedance, ser):
 
 
     if impedance == 'left':
-        ser.write('2'.encode())
+        ser.write(b'8')
     if impedance == 'right':
-        ser.write('3'.encode())
+        ser.write(b'9')
     if impedance == 'zero':
-        ser.write('1'.encode())
+        ser.write(b'7')
 
 def end_game():
     """
@@ -344,7 +344,7 @@ def play():
 
         # Player movement
         if TOGGLE_SERIAL:
-            x_position = 320 + 320 * (0.18 * -ENCODER /45) + 6
+            x_position += (0.18 * -ENCODER /45) * 20
         else:
             if pygame.key.get_pressed()[K_a]:
                 x_position = x_position - 800 * dt
@@ -352,7 +352,7 @@ def play():
                 x_position = x_position + 800 * dt 
                 
         # add wind acceleration
-        x_position += wind_vel * (pygame.time.get_ticks() - deltaWind) / 1000 
+        x_position += wind_vel * (pygame.time.get_ticks() - deltaWind) / 1000
 
         # Keep player inside screen 
         if x_position > WIDTH - PLAYER_W:

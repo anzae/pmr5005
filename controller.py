@@ -9,7 +9,7 @@ def start_serial(serial):
 
 # O programa do Arduino para de enviar dados quando recebe 0 pela porta serial
 def end_serial(serial):
-    serial.write("0".encode())
+    serial.write(b'0')
     serial.close()
 
 def create_fonts(font_sizes_list):
