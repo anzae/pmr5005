@@ -49,14 +49,14 @@ def impedance(impedance, ser):
     # 3 niveis de "impedancia": left, right, zero
     # o guidão empurra para a esquerda ou para direita dependendo do vento
 
-    if TOGGLE_SERIAL:
 
-        if impedance == 'left':
-            ser.write('2'.encode())
-        if impedance == 'right':
-            ser.write('3'.encode())
-        if impedance == 'zero':
-            ser.write('1'.encode())
+
+    if impedance == 'left':
+        ser.write('2'.encode())
+    if impedance == 'right':
+        ser.write('3'.encode())
+    if impedance == 'zero':
+        ser.write('1'.encode())
 
 def end_game():
     """
@@ -75,25 +75,29 @@ def end_game():
 def render(fnt, what, color, where):
     # "Renders the fonts as passed from display_fps"
     text_to_show = fnt.render(what, 0, pygame.Color(color))
-    # TODO: rectangle with transparency to better visualize the hud
     screen.blit(text_to_show, where)
 
-def display_hud(score, lives, height):
+def display_hud(score, lives, height, dt):
     render(
         fonts[1],
         what="LIVES: {}".format(lives),
         color="black",
-        where=(15, 5))
+        where=(20, 5))
     render(
         fonts[1],
         what="FPS: {}".format(int(clock.get_fps())),
         color="black",
-        where=(200, 5))
+        where=(155, 5))
     render(
         fonts[1],
         what="Height: {}".format(height),
         color="black",
-        where=(350, 5))
+        where=(290, 5))
+    render(
+        fonts[1],
+        what="Time: {}s".format(dt),
+        color="black",
+        where=(425, 5))
     render(
         fonts[1],
         what="SCORE: {}".format(score),
@@ -189,6 +193,9 @@ def play():
     flag_start = 0
     flag_end = 1
 
+    # start counting time for game
+    start_time = pygame.time.get_ticks()
+
 ### MAIN LOOP ###
     while GAME_RUNNING:
 
@@ -234,10 +241,12 @@ def play():
 
         # Background auto scroller
         y_bg -= FALL_SPEED
+        # player falls when background stops scrolling
         if y_bg < -HEIGHT * BACKGROUND_NUMBER:
             y_bg = -HEIGHT * BACKGROUND_NUMBER
             y_position += FALL_SPEED
             player.rect.y += FALL_SPEED
+        # player stops when they hit the ground
         if y_position > HEIGHT / 2 - 20: # adjustment to ground image
             y_position = HEIGHT / 2 - 20
             print("Score: ", score)
@@ -273,11 +282,7 @@ def play():
             idx += 1
 
     ### PLAYER ###
-        # Keep player inside screen 
-        if x_position > WIDTH - PLAYER_W:
-            x_position = WIDTH - PLAYER_W
-        if x_position < 0:
-            x_position = 0
+        
 
         # Change rect attributes
         player.rect.x = x_position + PLAYER_W/3 + 2
@@ -296,7 +301,6 @@ def play():
     ### UPDATE ###
         # Entities update
         wind_collider = False
-        player.update(spikes)
         for coin in coins_group:
             score = collect_coin(score, player, coin)
             coin.update()
@@ -305,26 +309,26 @@ def play():
         for wind in winds_group:
             if enter_wind(wind, player):
                 wind_collider = True
-                wind_mag = wind.magnitude
+                wind_mag = wind.magnitude # get value from which wind is colliding
 
         # Sobre as flags: a ideia é que, quando começar o vento, ative a flag start, escreva na serial apenas 1 vez o lado do vento, e desative a flag end
         # Quando sair da região do vento (wind collider false), desativa a flag start e ativa a flag end, indicando que terminou o vento
         # Vamos ver se funciona...
 
+        # se o player entrou na região de vento
         if wind_collider: 
-            wind_vel = wind_mag * (pygame.time.get_ticks() - deltaWind) / 1000
+            wind_vel = wind_mag 
 
             # Adicionado a partir daqui...
             flag_start = 1
-            if wind_mag > 0 and flag_end:
+
+            if flag_end:
                 flag_end = 0
                 deltaWind = pygame.time.get_ticks()
-                impedance('right', ser)
-            if wind_mag < 0 and flag_end:
-                flag_end = 0
-                deltaWind = pygame.time.get_ticks()
-                impedance('left', ser)
+                if TOGGLE_SERIAL:
+                    impedance('right', ser) if wind_mag > 0 else impedance('left', ser)
             # Até aqui, e...
+
         else:
             deltaWind = 0
             wind_vel = 0
@@ -332,7 +336,8 @@ def play():
             if flag_start:
                 flag_start = 0
                 flag_end = 1
-                impedance('zero', ser)
+                if TOGGLE_SERIAL:
+                    impedance('zero', ser)
             # Até aqui.
 
         wind_collider = False
@@ -345,11 +350,21 @@ def play():
                 x_position = x_position - 800 * dt
             if pygame.key.get_pressed()[K_d]:
                 x_position = x_position + 800 * dt 
-        x_position += wind_vel 
+                
+        # add wind acceleration
+        x_position += wind_vel * (pygame.time.get_ticks() - deltaWind) / 1000 
+
+        # Keep player inside screen 
+        if x_position > WIDTH - PLAYER_W:
+            x_position = WIDTH - PLAYER_W
+        if x_position < 0:
+            x_position = 0
+
         
         # Game update
         game_h = TOTAL_HEIGHT + y_bg - y_position - PLAYER_H - 160 # adjustment to be 0 when player hits the ground
-        display_hud(score, lives, game_h)
+        totaltime = (pygame.time.get_ticks() - start_time) / 1000 
+        display_hud(score, lives, game_h, totaltime)
         screen.blit(player.image, (x_position, y_position))
         pygame.display.update()
         if not start:

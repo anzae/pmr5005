@@ -2,7 +2,6 @@ from datetime import datetime
 from consts import *
 import pygame
 from pygame.locals import *
-import time
 
 # O programa do Arduino começa a enviar dados quando recebe 1 pela porta serial
 def start_serial(serial):
