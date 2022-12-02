@@ -8,7 +8,7 @@ def graph(file):
     """
     data = json.load(open(file, 'r'))
 
-    time = [key["T"]/1000000 for key in data]
+    time = [key["T"]/1000 for key in data]
     S1 = [key["S1"] for key in data]
     S2 = [key["S2"] for key in data]
     S3 = [key["S3"] for key in data]
@@ -31,7 +31,7 @@ def graph(file):
     py.offline.plot(graphs)
 
 # edit file name to view the graphs
-file = 'sensors-2022-11-24-15h12'
+file = 'sensors-2022-12-2-9h43'
 if __name__ == '__main__':
     path = 'results/{}.json'.format(file)
     graph(path)
