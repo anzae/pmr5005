@@ -49,8 +49,6 @@ def impedance(impedance, ser):
     # 3 niveis de "impedancia": left, right, zero
     # o guidão empurra para a esquerda ou para direita dependendo do vento
 
-
-
     if impedance == 'left':
         ser.write(b'8')
     if impedance == 'right':
@@ -140,10 +138,7 @@ def menu():
 def play():
 
     global GAME_RUNNING
-    start = False
-
-    if TOGGLE_SERIAL:
-        start_serial(ser)
+    start = False 
     
     coins = []
     spikes = []
@@ -192,6 +187,9 @@ def play():
     # Impedance flag
     flag_start = 0
     flag_end = 1
+
+    if TOGGLE_SERIAL:
+        start_serial(ser)
 
     # start counting time for game
     start_time = pygame.time.get_ticks()

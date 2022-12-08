@@ -160,6 +160,7 @@ int acc = 0;
 double sinal;
 unsigned long tempoSerial = 0;
 int tempoDelay = 10;
+unsigned long tempo_inicio = 0;
 
 bool flagStopMotor = true;
 
@@ -245,6 +246,7 @@ void loop() {
     analogWrite(pinCONTROL_RH, 0);
     if (SerialUSB.available() > 0) {
       serialFlag = SerialUSB.read();
+      tempo_inicio = millis();
     }
   }
 
@@ -362,7 +364,7 @@ void loop() {
     if (millis() - tempoSerial > 40) {
       tempoSerial = millis();
       SerialUSB.print("#");
-      SerialUSB.print(tempoSerial);
+      SerialUSB.print(tempoSerial-tempo_inicio);
       SerialUSB.print(",");
       SerialUSB.print(sensor1);
       SerialUSB.print(",");
@@ -385,6 +387,7 @@ void loop() {
 
     if (SerialUSB.available() > 0) {
       serialFlag = SerialUSB.read();
+      tempo_inicio = 0;
     }
     delay(2);
   }
