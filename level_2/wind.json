@@ -1,22 +1,22 @@
 [
     {
-        "y_start": 300,
-        "y_end": 600,
-        "magnitude": 3
+        "y_start": 350,
+        "y_end": 700,
+        "magnitude": 1.6
     },
     {
-        "y_start": 900,
-        "y_end": 1300,
+        "y_start": 1000,
+        "y_end": 1350,
         "magnitude": -4
     },
     {
         "y_start": 1600,
-        "y_end": 1900,
+        "y_end": 1950,
         "magnitude": -3
     },
     {
         "y_start": 2200,
-        "y_end": 2500,
+        "y_end": 2550,
         "magnitude": 2
     }
 ]

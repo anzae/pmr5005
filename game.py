@@ -363,6 +363,8 @@ def play():
         totaltime = (pygame.time.get_ticks() - start_time) / 1000 
         display_hud(score, lives, game_h, totaltime)
         screen.blit(player.image, (x_position, y_position))
+        # visualize player collider
+        # pygame.draw.rect(screen, 'red', pygame.Rect(player.rect.x, player.rect.y, PLAYER_W/3, PLAYER_H*3/5))
         pygame.display.update()
         if not start:
             time.sleep(0.5)
