@@ -1,5 +1,5 @@
 # Control whether the serial port is being used or not. Mostly for test usage
-TOGGLE_SERIAL = False
+TOGGLE_SERIAL = True
 
 # Serial constants
 PORT_NAME = "COM3"
@@ -29,7 +29,7 @@ SPIKE_SIZE = 120
 WIND_SIZE = 40
 
 # Level configs
-LEVEL = 'level_2'
+LEVEL = 'level_3'
 COINS_CONFIG = '{}/coins.json'.format(LEVEL)
 SPIKES_CONFIG = '{}/spikes.json'.format(LEVEL)
 WIND_CONFIG = '{}/wind.json'.format(LEVEL)

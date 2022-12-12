@@ -16,7 +16,7 @@ def graph(file):
     S4 = [key["S4"] for key in data]
     S5 = [key["S5"]for key in data]
     S6 = [key["S6"] for key in data]
-    playerX = [key["playerY"] for key in data]
+    playerX = [key["playerX"] for key in data]
     encoder = [key["E"] for key in data]
     encoder_angular = [e * 0.18 for e in encoder]
 
@@ -30,7 +30,7 @@ def graph(file):
     plot_player = go.Scatter(x=time, y=playerX, mode='lines', name="Player position")
     plot_angular = go.Scatter(x=time, y=encoder_angular, mode='lines', name="Encoder angular")
 
-    graphs = [plot1, plot2, plot3, plot4, plot5, plot6, plot_angular]
+    graphs = [plot1, plot2, plot3, plot4, plot5, plot6, plot_angular, plot_player]
     return graphs
 
 # Plot the game object items 
@@ -40,7 +40,7 @@ def plot_items(item_path, isWind=False):
     # game objects are in pixel units, graphs need to be in time units
     # conversion obtained experimentally, dividing the initial height by total time (both displayed in hud)
     # also removing the little delay before game starts
-    time_conversion = lambda position : position / 146.06 - 1.13
+    time_conversion = lambda position : position / (2535/21.23) - 1
 
     with open(item_path, 'r') as items:
         file = json.load(items)
@@ -50,7 +50,7 @@ def plot_items(item_path, isWind=False):
                 end = time_conversion(item["y_end"])
                 magnitude = item["magnitude"]*100
                 # x = central point, width = half width
-                plot = go.Bar(x=[(start+end)/2], width=end-start, y=[magnitude])
+                plot = go.Bar(x=[(start+end)/2], width=end-start, y=[magnitude], name="wind")
                 plots.append(plot)
         else:
             x_values =  []
@@ -58,12 +58,12 @@ def plot_items(item_path, isWind=False):
             for item in file:
                 x_values.append(item["x"]-320)
                 y_values.append(time_conversion(item["y"]))
-            plot = go.Scatter(x=y_values, y=x_values, mode='markers')
+            plot = go.Scatter(x=y_values, y=x_values, mode='markers', name="coins")
             plots.append(plot)
     return plots
 
 # edit file name to view the graphs
-file = 'sensors-2022-12-8-14h34'
+file = 'sensors-2022-12-12-11h33'
 if __name__ == '__main__':
     path = 'results/{}.json'.format(file)
     plot_sensors = graph(path)
