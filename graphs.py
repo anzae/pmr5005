@@ -3,7 +3,7 @@ import plotly.graph_objs as go
 import json
 from consts import * 
 
-def graph(file, level=None):
+def graph(file):
     """
     Generate the graph corresponding to the file
     """
@@ -28,23 +28,47 @@ def graph(file, level=None):
     # plot7 = go.Scatter(x=time, y=encoder, mode='lines', name="Encoder")
     plot8 = go.Scatter(x=time, y=encoder_angular, mode='lines', name="Encoder angular")
 
-    plot_winds = []
-
-    if level:
-
-        with open(WIND_CONFIG, 'r') as winds:
-            file = json.load(winds)
-            for wind in file:
-                start = wind["y_start"]
-                end = wind["y_end"]
-                magnitude = wind["magnitude"]
-                plot_winds.append(go.Bar(x=[(start-180)/300], width=((end-start+100)/300), y=[magnitude]))
-
     graphs = [plot8]
     py.offline.plot(graphs)
+
+# Plot the game object items 
+def plot_items(item_path, isWind=False):
+    plots = []
+
+    # game objects are in pixel units, graphs need to be in time units
+    # conversion obtained experimentally, dividing the initial height by total time (both displayed in hud)
+    # also removing the little delay before game starts
+    time_conversion = lambda position : position / 146.06 - 1.13
+
+    with open(item_path, 'r') as items:
+        file = json.load(items)
+        if isWind:
+            for item in file:
+                start = time_conversion(item["y_start"])
+                end = time_conversion(item["y_end"])
+                magnitude = item["magnitude"]*100
+                # x = central point, width = half width
+                plot = go.Bar(x=[(start+end)/2], width=end-start, y=[magnitude])
+                plots.append(plot)
+        else:
+            x_values =  []
+            y_values = []
+            for item in file:
+                x_values.append(item["x"]-320)
+                y_values.append(time_conversion(item["y"]))
+            plot = go.Scatter(x=y_values, y=x_values, mode='markers')
+            plots.append(plot)
+    return plots
+
+def graph_level():
+
+    plot_coins = plot_items(COINS_CONFIG)
+    plot_winds = plot_items(WIND_CONFIG, True)
+    py.offline.plot(plot_coins + plot_winds)
 
 # edit file name to view the graphs
 file = 'sensors-2022-12-8-14h34'
 if __name__ == '__main__':
-    path = 'results/{}.json'.format(file)
-    graph(path, 'level_2')
+    # path = 'results/{}.json'.format(file)
+    # graph(path)
+    graph_level()

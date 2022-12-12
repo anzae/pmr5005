@@ -281,7 +281,6 @@ def play():
 
     ### PLAYER ###
         
-
         # Change rect attributes
         player.rect.x = x_position + PLAYER_W/3 + 2
         for coin in coins_group:

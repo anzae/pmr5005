@@ -1,5 +1,5 @@
 # Control whether the serial port is being used or not. Mostly for test usage
-TOGGLE_SERIAL = True
+TOGGLE_SERIAL = False
 
 # Serial constants
 PORT_NAME = "COM3"
