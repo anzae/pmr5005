@@ -220,7 +220,9 @@ def play():
                     "S4": int(S4),
                     "S5": int(S5),
                     "S6": int(S6),
-                    "E": int(E)
+                    "E": int(E),
+                    "playerX": x_position + PLAYER_W/6,
+                    "playerY": y_position + PLAYER_H*3/10
                 }
                 list_sensors.append(formatted_data)
                 ENCODER = int(E)
