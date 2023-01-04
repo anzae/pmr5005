@@ -6,15 +6,15 @@ O objetivo desse projeto é desenvolver um jogo para analisar a movimentação n
 
 ## Como usar
 
-1. Subir o arquivo Acquisition_and_control.ino ao Arduino do guidão. O arquivo contém algumas modificações em relação ao original, para melhorar a compatibilidade com o programa desenvolvido.
+1. Subir o arquivo Acquisition_rework.ino (encontrado na pasta others) ao Arduino do guidão. O arquivo contém algumas modificações em relação ao original, para melhorar a compatibilidade com o programa desenvolvido.
 
 2. Instalar as dependências, listadas no arquivo requirements.txt
 
-3. Abrir o arquivo consts.py e alterar o nome da porta serial. Para usar o guidão, a constante TOGGLE_SERIAL deve ser True. Para jogar com teclado, deixar False.
+3. Abrir o arquivo consts.py e conferir as 3 configurações principais.
 
 4. (opcional) Para jogar o tutorial, alterar a constante LEVEL para 'level_0'. Senão, deixar em 'level_1'.
 
-5. (opcional) Para testar o envio de dados do guidão, rodar o arquivo testhandlebar.py. Seguir para o passo 7.
+5. (opcional) Para testar o envio de dados do guidão, rodar o arquivo testhandlebar.py dentro da pasta others. Seguir para o passo 7.
 
 6. Rodar o jogo, arquivo game.py. O jogo pode ser iniciado com a barra de espaço ou clicando no botão Start.
 

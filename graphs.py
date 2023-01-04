@@ -1,11 +1,22 @@
 import plotly.offline as py
 import plotly.graph_objs as go
+from plotly.subplots import make_subplots
 import json
 from consts import * 
 
-def graph(file):
+# ----------------------------------------------------------
+# PLOTLY DOCUMENTATION
+# ----------------------------------------------------------
+# https://plotly.com/python/reference/
+# ----------------------------------------------------------
+
+# Edit file name to see respective graph
+file = 'sensors-2023-1-4-18h41m49s'
+path = 'results/{}.json'.format(file)
+
+def sensors_graphs(file):
     """
-    Generate the graph corresponding to the file
+    Generates a dict with the graphs S1, S2, S3, S4, S5, S6, playerPosition and encoder
     """
     data = json.load(open(file, 'r'))
 
@@ -17,56 +28,78 @@ def graph(file):
     S5 = [key["S5"]for key in data]
     S6 = [key["S6"] for key in data]
     playerX = [key["playerX"] for key in data]
-    encoder = [key["E"] for key in data]
-    encoder_angular = [e * 0.18 for e in encoder]
+    playerY = [key["playerY"] for key in data]
+    encoder = [key["E"] * 0.18 for key in data]
 
-    plot1 = go.Scatter(x=time, y=S1, mode='lines', name="Sensor 1")
-    plot2 = go.Scatter(x=time, y=S2, mode='lines', name="Sensor 2")
-    plot3 = go.Scatter(x=time, y=S3, mode='lines', name="Sensor 3")
-    plot4 = go.Scatter(x=time, y=S4, mode='lines', name="Sensor 4")
-    plot5 = go.Scatter(x=time, y=S5, mode='lines', name="Sensor 5")
-    plot6 = go.Scatter(x=time, y=S6, mode='lines', name="Sensor 6")
-    # plot7 = go.Scatter(x=time, y=encoder, mode='lines', name="Encoder")
-    plot_player = go.Scatter(x=time, y=playerX, mode='lines', name="Player position")
-    plot_angular = go.Scatter(x=time, y=encoder_angular, mode='lines', name="Encoder angular")
+    plot1 = go.Scatter(x=playerY, y=S1, mode='lines', name='Sensor 1')
+    plot2 = go.Scatter(x=playerY, y=S2, mode='lines', name='Sensor 2')
+    plot3 = go.Scatter(x=playerY, y=S3, mode='lines', name='Sensor 3')
+    plot4 = go.Scatter(x=playerY, y=S4, mode='lines', name='Sensor 4')
+    plot5 = go.Scatter(x=playerY, y=S5, mode='lines', name='Sensor 5')
+    plot6 = go.Scatter(x=playerY, y=S6, mode='lines', name='Sensor 6')
+    plot_player = go.Scatter(x=playerY, y=playerX, mode='lines', name='Trajetória', line={'width': 4})
+    plot_encoder = go.Scatter(x=playerY, y=encoder, mode='lines', name='Posição angular')
 
-    graphs = [plot1, plot2, plot3, plot4, plot5, plot6, plot_angular, plot_player]
+    graphs = {
+        'sensor1': plot1, 
+        'sensor2': plot2,
+        'sensor3': plot3,
+        'sensor4': plot4, 
+        'sensor5': plot5,
+        'sensor6': plot6,
+        'player': plot_player,
+        'encoder': plot_encoder
+    }
     return graphs
 
-# Plot the game object items 
-def plot_items(item_path, isWind=False):
+
+def level_graphs():
+    """
+    Generates the plot of the level, wind magnitude 100x bigger 
+    """
+    data_coins = json.load(open(COINS_CONFIG, 'r'))
+    data_wind = json.load(open(WIND_CONFIG, 'r'))
     plots = []
 
-    # game objects are in pixel units, graphs need to be in time units
-    # conversion obtained experimentally, dividing the initial height by total time (both displayed in hud)
-    # also removing the little delay before game starts
-    time_conversion = lambda position : position / (2535/21.23) - 1
+    coins_x = [item['x']-320 for item in data_coins]
+    coins_y = [item['y'] for item in data_coins]
+    plot_coins = go.Scatter(x=coins_y, y=coins_x, mode='lines+markers', line={'dash':'dash', 'width': 3}, name='Trajetória esperada')
+    plots.append(plot_coins)
 
-    with open(item_path, 'r') as items:
-        file = json.load(items)
-        if isWind:
-            for item in file:
-                start = time_conversion(item["y_start"])
-                end = time_conversion(item["y_end"])
-                magnitude = item["magnitude"]*100
-                # x = central point, width = half width
-                plot = go.Bar(x=[(start+end)/2], width=end-start, y=[magnitude], name="wind")
-                plots.append(plot)
-        else:
-            x_values =  []
-            y_values = []
-            for item in file:
-                x_values.append(item["x"]-320)
-                y_values.append(time_conversion(item["y"]))
-            plot = go.Scatter(x=y_values, y=x_values, mode='markers', name="coins")
-            plots.append(plot)
-    return plots
+    for wind in data_wind:
+        start = wind['y_start']
+        end = wind['y_end']
+        magnitude = wind['magnitude'] * 100
+        plot = go.Bar(x=[(start+end)/2], width=end-start, y=[magnitude], name="Wind")
+        plots.append(plot)
 
-# edit file name to view the graphs
-file = 'sensors-2022-12-12-11h33'
+    return(plots)
+
 if __name__ == '__main__':
-    path = 'results/{}.json'.format(file)
-    plot_sensors = graph(path)
-    plot_coins = plot_items(COINS_CONFIG)
-    plot_winds = plot_items(WIND_CONFIG, True)
-    py.offline.plot(plot_coins + plot_winds + plot_sensors)
+    sensors = sensors_graphs(path)
+    level = level_graphs()
+
+    fig = make_subplots(rows=3, cols=1)
+
+    # plot 1
+    # posição atual vs posição desejada
+    for element in level:
+        fig.add_trace(element, row=1, col=1)
+    fig.add_trace(sensors['player'], row=1, col=1)
+
+    # plot 2
+    for element in level:
+        fig.add_trace(element, row=2, col=1)
+    fig.append_trace(sensors['encoder'], row=2, col=1)
+
+    # plot 3
+    for element in level:
+        fig.add_trace(element, row=3, col=1)
+    fig.add_trace(sensors['sensor1'], row=3, col=1)
+    fig.add_trace(sensors['sensor2'], row=3, col=1)
+    fig.add_trace(sensors['sensor3'], row=3, col=1)
+    fig.add_trace(sensors['sensor4'], row=3, col=1)
+    fig.add_trace(sensors['sensor5'], row=3, col=1)
+    fig.add_trace(sensors['sensor6'], row=3, col=1)
+
+    py.offline.plot(fig)

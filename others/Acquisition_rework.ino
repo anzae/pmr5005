@@ -6,12 +6,25 @@
 // Realiza a quadratura do encoder através do chip HCTL-2022 (utiliza o código "teste_chip_quad_encoder_v4")
 // Controla o motor pela ponte H IBT_2
 // Realiza leitura e conversão AD em alta velocidade através de acesso direto aos registradores (previamente desenvolvido em "Acquisition_v1")
-// Utiliza programa Matlab "teste_jogo9" entre outros
-// VERSÃO 5: Codigo final para experimentos
+// Utiliza jogo em python pela comunicação serial
+// Versão 6: modificado por Ana
 
 // Global preamble
 #include "Arduino.h"
 #include "wiring_private.h"
+
+  //RESET - zera a leitura do encoder
+  #define RSTN 0
+
+  //Habilita/Desabilita leitura (CHIP DE QUADRATURA: pino ?)
+  #define EON 2
+
+  //Escolhe Byte para leitura - MSB: SEL1=0 / LSB: SEL1=1 (CHIP DE QUADRATURA: pino ?)
+  #define SEL1 3
+
+//Ativação do motor por PWM (PONTE H: pinos 8 (direita) e 9 (esquerda))
+  #define pinCONTROL_RH 8
+  #define pinCONTROL_LH 9
 
 //##############################################################################
 // Classe do controlador PID
@@ -35,6 +48,7 @@ public:
     kD = _kD;
   }
 
+  // 
   void addNewSample(double _sample) {
     sample = _sample;
   }
@@ -97,7 +111,7 @@ static void ADCsync() {
   unsigned long result_LSB;
   unsigned long result_MSB;
   unsigned long result;
-  short count = 0;  // necessário ser short (16-bit) para que funcione a operação automática de complento de 2 e a variável seja lida como negativa quando msbit é HIGH
+  short encoder_count = 0;  // necessário ser short (16-bit) para que funcione a operação automática de complento de 2 e a variável seja lida como negativa quando msbit é HIGH
   int chipQuad_pins[] = { 4, 5, 11, 13, 10, 12, 6, 7 };
 
 // Para o PID
@@ -105,81 +119,50 @@ static void ADCsync() {
   double ganho;
 
 // Para o CTRL DE IMPEDÂNCIA
-  // Valores do controlador - #TODO arrumar
+  // Valores do controlador - Valores definidos pelo Lucas
   double I_c = 0.0013;
   double B_c = 0.00025;
   double K_c = 0.005;
 
-
 // tempos para o calculo de impedancia em [s]
-double t_0 = 0;
-double t_i = 0;
-double t_i1 = -1 / 1000.0;
+double t_0 = 0;                          // tempo inicial para calculo de impedancia
+double t_i = 0;                          // tempo atual para calculo de impedancia
+double t_i1 = -1 / 1000.0;               // tempo anterior para calculo de impedancia
 
 // posicoes angulares em [rad]
-double theta_0 = 0; // posicao inicial
-double theta_i = 0; // posicao atual
-double theta_i1 = 0;
-double theta_i2 = 0;
-double theta_des = 0;
+double theta_i = 0;                      // angulo atual 
+double theta_i1 = 0;                     // angulo anterior 
+double theta_i2 = 0;                     // angulo anterior do anterior 
+double theta_des = 0;                    // angulo desejado
 
 // Comunicacao Serial
 char serialFlag = '0';
 
-// signed int D;
-double T;
-// double T_act;
-// double spd;
-// double Va;
-// double x_2;
-// double x_1 = 0;
-// double x = 0;
-// double td_1, td_2;
-// double avv_ref = 0;
-double a = 0;
-double b = 0;
+// calculos de torque
+double Tm;                               // torque medido
+double Th;                               // torque humano
+double Tact;                             // torque atuador
+double PWM;                              // valor enviado por PWM proporcional ao torque
+double maxTorqueMotor = 2.2;             // torque maximo do motor, vale 2.2 Nm
 
 // Para a MÉDIA MÓVEL de força
-const int numReadingsForce = 10;        // tamanho da média móvel
+const int numReadingsForce = 10;         // tamanho da média móvel
 double readingsForce[numReadingsForce];  // vetor com medidas para cálculo da média móvel
-int readIndexForce = 0;       // indice da medida atual de força
-double totalForce = 0;    // soma total dos valores medidos
-double averageForce = 0;  // média
-double maxLoadCell = 24.517; // valor maximo da celula de carga em [N]
-double lc = 0.12; // valor do comprimento l_c de acordo com a tese
+int readIndexForce = 0;                  // indice da medida atual de força
+double totalForce = 0;                   // soma total dos valores medidos
+double averageForce = 0;                 // média
+double maxLoadCell = 24.517;             // valor maximo da celula de carga em [N]
+double lc = 0.12;                        // valor do comprimento l_c em [m]
 
-// Para a posição theta desejada
-double deltat = 0;
-
-// Outros
-unsigned long inicio = 0;
-unsigned long fim = 0;
-int acc = 0;
-// unsigned long t1 = 0;
-// unsigned long t2 = 0;
-double sinal;
-unsigned long tempoSerial = 0;
-int tempoDelay = 10;
-unsigned long tempo_inicio = 0;
+// Tempos
+double deltat = 0;                       // tempo entre as leituras em [s]
+unsigned long tempoSerial = 0;           // controle do tempo para mandar dados pela serial
+unsigned long tempo_inicio = 0;          // controle do tempo de início de cada atividade
 
 bool flagStopMotor = true;
+double pi = 3.141592653589793;
 
-// Definições
-  //RESET - zera a leitura do encoder
-  #define RSTN 0
-
-  //Habilita/Desabilita leitura (CHIP DE QUADRATURA: pino ?)
-  #define EON 2
-
-  //Escolhe Byte para leitura - MSB: SEL1=0 / LSB: SEL1=1 (CHIP DE QUADRATURA: pino ?)
-  #define SEL1 3
-
-//Ativação do motor por PWM (PONTE H: pino )
-#define pinCONTROL_RH 8
-#define pinCONTROL_LH 9
-
-//PID myPid(0.4, 0, 0.005);
-//PID myPid(0.3, 0, 0.01);
+// PID(kD, kI, kP) - TODO: consertar os valores - como? não sei
 PID myPid(100, 0, 1000);
 
 void setup() {
@@ -239,7 +222,7 @@ void setup() {
 
 void loop() {
   while (serialFlag == '0') {
-    count = 0;
+    encoder_count = 0;
     digitalWrite(RSTN, LOW);
     digitalWrite(RSTN, HIGH);
     analogWrite(pinCONTROL_LH, 0);
@@ -251,7 +234,6 @@ void loop() {
   }
 
   t_0 = millis() / 1000.0;
-  // tempoSerial = micros();
 
   while (serialFlag != '0') {
 
@@ -266,73 +248,76 @@ void loop() {
     //---------------------------/-------------------------
 
     // Para o PID e CRTL IMPEDÂNCIA
+
     /** ----- 1. READ ENCODER -----**/
+
+    read_pos(); // reads encoder and saves to encoder_count variable
     
     // tempos em [s]
     t_i1 = t_i;
-    t_i = (millis() / 1000.0 - t_0); // em [s]
-
-    read_pos(); // reads encoder and saves to count variable
+    t_i = (millis()/1000.0 - t_0);
+    
+    // angulos em rad
     theta_i2 = theta_i1;
     theta_i1 = theta_i;
-    theta_i = (count / 1000.0) * 3.14159; // em [rad]
+    theta_i = (encoder_count / 1000.0) * pi;
 
     /** ----- 2. CALC POSIÇÃO REF -----**/
 
     // calcula media movel dos valores da celula de carga
     totalForce -= readingsForce[readIndexForce];
-    // mapeia o sensor3 de 0 a 8191 para -24.5 a 24.5
-    readingsForce[readIndexForce] = map(sensor3, 0, 8191, -maxLoadCell, maxLoadCell); 
+    readingsForce[readIndexForce] = map(sensor3, -4096, 4096, -maxLoadCell, maxLoadCell); 
     totalForce += readingsForce[readIndexForce];
     readIndexForce ++;
-    if (readIndexForce >= numReadingsForce) {
-      readIndexForce = 0;
-    }
+    if (readIndexForce >= numReadingsForce) readIndexForce = 0;
     averageForce = totalForce / (numReadingsForce / 1.0); // force result to be double
 
-    T = averageForce * lc;  //T em [N.m]
-
+    // Torque aplicado pelo usuario
+    Th = averageForce * lc;  
     deltat = t_i - t_i1;
 
-    a = I_c/(deltat*deltat);
-    b = B_c / (deltat);
+    // torque do motor
+    Tm = I_c * (theta_i - theta_i2) / (deltat * deltat) + B_c * (theta_i - theta_i1) + K_c * (theta_des - theta_i)
+    Tact = Tm - Th;
+    PWM = map(Tm, 0, maxTorqueMotor, 0, 255);
 
-    // angulo theta desejado no guidao
-    theta_des = ((T +  theta_i1 * ((2*a) + b) - (theta_i2 * a) - (K_c * theta_0)) / (a + b - K_c));  // theta desejado
     /** ----- 3. CALC PID -----**/
     // Manda posição lida para o controlador
     myPid.addNewSample(theta_i);
 
+    // Recebimento na serial de comandos para o motor
+    // modo motor desligado
     if (serialFlag == '6') {
-      // modo motor desligado
       flagStopMotor = true;
     }
 
+    // setpoint = media dos valores medidos (original do Lucas)
     else if (serialFlag == '7') {
-      // setpoint = media dos valores medidos
-      myPid.setSetPoint(theta_des);
+      theta_des = theta_i;
       flagStopMotor = false;
     }
 
-    // impedância sentido horário
+    // setpoint = 45 graus - sentido horário
     else if (serialFlag == '8') {  
-      // setpoint = 45 graus
-      myPid.setSetPoint( 3.14159 / 4);
+      theta_des = pi/4;
       flagStopMotor = false;
     }
 
     // impedância sentido anti-horário
     else if (serialFlag == '9') { 
       //setpoint = -45 graus
-      myPid.setSetPoint(-3.14159 / 4);
+      theta_des = -pi/4;
       flagStopMotor = false;
     }
 
     else {
       // sem flag, motor persegue o zero
-      myPid.setSetPoint(0.0);
+      theta_des = 0;
       flagStopMotor = false;
     }
+
+    // Faz o setpoint como o theta desejado
+    myPid.setSetPoint(theta_des);
 
     // Calcula erro baseado no setpoint definido
     err = myPid.calc_error();
@@ -341,8 +326,6 @@ void loop() {
     ganho = myPid.process();
 
     /** ----- 4. ACT PID -----**/
-
-
     if (flagStopMotor) {
       analogWrite(pinCONTROL_RH, 0);
       analogWrite(pinCONTROL_LH, 0);
@@ -351,17 +334,18 @@ void loop() {
     // Seleciona o sentido de rotação do motor
     else if (err < 0 ) {
       analogWrite(pinCONTROL_RH, 0);
-      analogWrite(pinCONTROL_LH, ganho);
-    } else {
+      analogWrite(pinCONTROL_LH, PWM * ganho);
+    } 
+    else {
       analogWrite(pinCONTROL_LH, 0);
-      analogWrite(pinCONTROL_RH, ganho);
+      analogWrite(pinCONTROL_RH, PWM * ganho);
     }
 
     // Para o envio de informação
     //Send Information Bloc -------------------------------
     
-
-    if (millis() - tempoSerial > 40) {
+    // Envia informações a cada 40ms
+    if (millis() - tempoSerial >= 40) {
       tempoSerial = millis();
       SerialUSB.print("#");
       SerialUSB.print(tempoSerial-tempo_inicio);
@@ -378,13 +362,11 @@ void loop() {
       SerialUSB.print(",");
       SerialUSB.print(sensor6);
       SerialUSB.print("@");
-      SerialUSB.print(count);
+      SerialUSB.print(encoder_count);
       SerialUSB.print("\n");
     }
 
-    //Bloc duration = 462us
-    //---------------------------/-------------------------
-
+    // Reset na atividade
     if (SerialUSB.available() > 0) {
       serialFlag = SerialUSB.read();
       tempo_inicio = 0;
@@ -445,7 +427,7 @@ void read_pos() {
 
   digitalWrite(EON, HIGH);  //Disable OE
 
-  count = result_LSB >> 14 | result_MSB >> 6;
+  encoder_count = result_LSB >> 14 | result_MSB >> 6;
 }
 
 void read_MSB() {

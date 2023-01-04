@@ -5,7 +5,6 @@ from sys import exit
 import time
 from consts import * 
 from controller import *
-import math
 
 # Data acquisition imports
 import serial
@@ -17,7 +16,7 @@ if TOGGLE_SERIAL:
     ### Serial setup
     """
         Setting up the serial communication with the handlebars. 
-        Change the port name according to your computer or use terminal to input the port name
+        Change the port name according to your computer.
         The script will try to open the port, and end the program if failed
     """
     try:
@@ -28,15 +27,15 @@ if TOGGLE_SERIAL:
 
     ### JSON file setup
     """
-        The script creates a new file inside the results folder named "sensors-YYYY-MM-DD-HHhMM"
+        The script creates a new file inside the results folder named "sensors-YYYY-MM-DD-HHhMMmSSs"
         This file will be soon used to save the data coming from the Arduino
     """
     d = datetime.now()
-    date_formatted = '{}-{}-{}-{}h{}'.format(d.year, d.month, d.day, d.hour, d.minute)
+    date_formatted = '{}-{}-{}-{}h{}m{}s'.format(d.year, d.month, d.day, d.hour, d.minute, d.second)
     sensorsJson = "results/sensors-" + date_formatted + ".json"    
     list_sensors = []
 
-    ENCODER = 0
+    Encoder = 0
 
 # global GAME_RUNNING 
 GAME_RUNNING = True
@@ -46,7 +45,7 @@ GAME_RUNNING = True
 # when there's no collision, impedance must return to zero 
 def impedance(impedance, ser):
 
-    # 3 niveis de "impedancia": left, right, zero
+    # 3 angulos desejados: left (-45), right, zero
     # o guidão empurra para a esquerda ou para direita dependendo do vento
 
     if impedance == 'left':
@@ -62,8 +61,8 @@ def end_game():
         It opens the json file and saves data from the sensors, then closes the game and ends the program.
     """
     if TOGGLE_SERIAL:
+        end_serial(ser)
         with open(sensorsJson, 'w') as file:
-            end_serial(ser)
             json.dump(list_sensors, file)
     time.sleep(0.5)
     pygame.quit()
@@ -221,10 +220,11 @@ def play():
                     "S5": int(S5),
                     "S6": int(S6),
                     "E": int(E),
-                    "playerX": int(x_position + PLAYER_W/2-320)
+                    "playerX": int(x_position + PLAYER_W/2-320),
+                    "playerY": int(y_position + PLAYER_H/2)
                 }
                 list_sensors.append(formatted_data)
-                ENCODER = int(E)
+                Encoder = int(E)
 
     ### QUIT EVENT ###
         for event in pygame.event.get():
@@ -342,7 +342,7 @@ def play():
 
         # Player movement
         if TOGGLE_SERIAL:
-            x_position += (0.18 * -ENCODER /45) * 20
+            x_position += (0.18 * - Encoder/45) * 20
         else:
             if pygame.key.get_pressed()[K_a]:
                 x_position = x_position - 800 * dt
