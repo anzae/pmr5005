@@ -11,7 +11,7 @@ from consts import *
 # ----------------------------------------------------------
 
 # Edit file name to see respective graph
-file = 'sensors-2023-1-4-18h41m49s'
+file = 'sensors_2023_1_9_13h16m4s'
 path = 'results/{}.json'.format(file)
 
 def sensors_graphs(file):
@@ -70,7 +70,7 @@ def level_graphs():
         start = wind['y_start']
         end = wind['y_end']
         magnitude = wind['magnitude'] * 100
-        plot = go.Bar(x=[(start+end)/2], width=end-start, y=[magnitude], name="Wind")
+        plot = go.Bar(x=[(start+end)/2], width=end-start, y=[magnitude], name="Vento")
         plots.append(plot)
 
     return(plots)
@@ -82,24 +82,25 @@ if __name__ == '__main__':
     fig = make_subplots(rows=3, cols=1)
 
     # plot 1
-    # posição atual vs posição desejada
+    # posição atual e posição desejada
     for element in level:
         fig.add_trace(element, row=1, col=1)
     fig.add_trace(sensors['player'], row=1, col=1)
 
     # plot 2
+    # pressão palmar (sensores 1 e 6) e ventos
     for element in level:
         fig.add_trace(element, row=2, col=1)
-    fig.append_trace(sensors['encoder'], row=2, col=1)
+    fig.append_trace(sensors['sensor1'], row=2, col=1)
+    fig.append_trace(sensors['sensor6'], row=2, col=1)
 
     # plot 3
+    # outros sensores
     for element in level:
         fig.add_trace(element, row=3, col=1)
-    fig.add_trace(sensors['sensor1'], row=3, col=1)
     fig.add_trace(sensors['sensor2'], row=3, col=1)
     fig.add_trace(sensors['sensor3'], row=3, col=1)
     fig.add_trace(sensors['sensor4'], row=3, col=1)
     fig.add_trace(sensors['sensor5'], row=3, col=1)
-    fig.add_trace(sensors['sensor6'], row=3, col=1)
 
     py.offline.plot(fig)

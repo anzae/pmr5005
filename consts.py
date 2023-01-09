@@ -2,9 +2,9 @@
 # -----------------------------------------------------------------------------------------------
 # Configurações importantes para serem verificadas a cada sessão.
 # -----------------------------------------------------------------------------------------------
-TOGGLE_SERIAL = False        # Uso ou não da porta serial, só funciona se estiver com o Arduino
+TOGGLE_SERIAL = True        # Uso ou não da porta serial, só funciona se estiver com o Arduino
 PORT_NAME = "COM3"          # Nome da porta serial que vai ser usada, caso esteja com Arduino
-LEVEL = 3                   # Level do jogo, de 0 a 3
+LEVEL = 2                   # Level do jogo, de 0 a 3
 # -----------------------------------------------------------------------------------------------
 
 # Arduino configuration

@@ -163,7 +163,7 @@ bool flagStopMotor = true;
 double pi = 3.141592653589793;
 
 // PID(kD, kI, kP) - TODO: consertar os valores - como? não sei
-PID myPid(100, 0, 1000);
+PID myPid(0.3, 0, 0.7);
 
 void setup() {
   SerialUSB.begin(2000000);  //inicia a comunicação serial
@@ -277,13 +277,28 @@ void loop() {
     deltat = t_i - t_i1;
 
     // torque do motor
-    Tm = I_c * (theta_i - theta_i2) / (deltat * deltat) + B_c * (theta_i - theta_i1) + K_c * (theta_des - theta_i)
+    Tm = I_c * (theta_i - theta_i2) / (deltat * deltat) + B_c * (theta_i - theta_i1) + K_c * (theta_des - theta_i);
     Tact = Tm - Th;
     PWM = map(Tm, 0, maxTorqueMotor, 0, 255);
 
     /** ----- 3. CALC PID -----**/
     // Manda posição lida para o controlador
     myPid.addNewSample(theta_i);
+
+
+    // --------------------- COMANDOS PARA O MOTOR --------------------- //
+    /*
+    1: não faz nada
+    2: não faz nada
+    3: não faz nada
+    4: persegue 0º 
+    5: não faz nada
+    6: motor desligado
+    7: persegue a média móvel do ângulo atual
+    8: persegue 45º
+    9: persegue -45º
+    0: termina a atividade (modo em espera). Qualquer comando diferente de zero inicia a atividade
+    */
 
     // Recebimento na serial de comandos para o motor
     // modo motor desligado
@@ -310,7 +325,8 @@ void loop() {
       flagStopMotor = false;
     }
 
-    else {
+    // motor persegue o zero
+    else if (serialFlag == '4') {
       // sem flag, motor persegue o zero
       theta_des = 0;
       flagStopMotor = false;

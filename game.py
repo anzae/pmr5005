@@ -31,8 +31,8 @@ if TOGGLE_SERIAL:
         This file will be soon used to save the data coming from the Arduino
     """
     d = datetime.now()
-    date_formatted = '{}-{}-{}-{}h{}m{}s'.format(d.year, d.month, d.day, d.hour, d.minute, d.second)
-    sensorsJson = "results/sensors-" + date_formatted + ".json"    
+    date_formatted = '{}_{}_{}_{}h{}m{}s'.format(d.year, d.month, d.day, d.hour, d.minute, d.second)
+    sensorsJson = "results/sensors_" + date_formatted + ".json"    
     list_sensors = []
 
     Encoder = 0
@@ -49,11 +49,13 @@ def impedance(impedance, ser):
     # o guidão empurra para a esquerda ou para direita dependendo do vento
 
     if impedance == 'left':
-        ser.write(b'8')
-    if impedance == 'right':
         ser.write(b'9')
+    if impedance == 'right':
+        ser.write(b'8')
     if impedance == 'zero':
-        ser.write(b'7')
+        ser.write(b'4')
+    if impedance == 'no_impedance':
+        ser.write(b'6')
 
 def end_game():
     """
@@ -221,7 +223,7 @@ def play():
                     "S6": int(S6),
                     "E": int(E),
                     "playerX": int(x_position + PLAYER_W/2-320),
-                    "playerY": int(y_position + PLAYER_H/2)
+                    "playerY": int(-y_bg + y_position + PLAYER_H/2)
                 }
                 list_sensors.append(formatted_data)
                 Encoder = int(E)
@@ -246,8 +248,8 @@ def play():
             y_position += FALL_SPEED
             player.rect.y += FALL_SPEED
         # player stops when they hit the ground
-        if y_position > HEIGHT / 2 - 20: # adjustment to ground image
-            y_position = HEIGHT / 2 - 20
+        if y_position > HEIGHT/2: # adjustment to ground image
+            y_position = HEIGHT/2 
             print("Score: ", score)
             time.sleep(0.5) # talvez adicionar uma função indicando fim do jogo graficamente na tela
             end_game()
@@ -324,7 +326,7 @@ def play():
                 flag_end = 0
                 deltaWind = pygame.time.get_ticks()
                 if TOGGLE_SERIAL:
-                    impedance('right', ser) if wind_mag > 0 else impedance('left', ser)
+                    impedance('right', ser) if wind_mag < 0 else impedance('left', ser)
             # Até aqui, e...
 
         else:
@@ -335,7 +337,7 @@ def play():
                 flag_start = 0
                 flag_end = 1
                 if TOGGLE_SERIAL:
-                    impedance('zero', ser)
+                    impedance('no_impedance', ser)
             # Até aqui.
 
         wind_collider = False
@@ -360,7 +362,7 @@ def play():
 
         
         # Game update
-        game_h = TOTAL_HEIGHT + y_bg - y_position - PLAYER_H - 160 # adjustment to be 0 when player hits the ground
+        game_h = TOTAL_HEIGHT + y_bg - y_position - PLAYER_H - 140 # adjustment to be 0 when player hits the ground
         totaltime = (pygame.time.get_ticks() - start_time) / 1000 
         display_hud(score, lives, game_h, totaltime)
         screen.blit(player.image, (x_position, y_position))
