@@ -11,7 +11,7 @@ from consts import *
 # ----------------------------------------------------------
 
 # Edit file name to see respective graph
-file = 'sensors_2023_1_9_13h16m4s'
+file = 'sensors_2023_1_9_14h57m43s'
 path = 'results/{}.json'.format(file)
 
 def sensors_graphs(file):

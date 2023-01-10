@@ -4,7 +4,7 @@ import random
 
 d = datetime.now()
 date_formatted = '{}_{}_{}_{}h{}m{}s'.format(d.year, d.month, d.day, d.hour, d.minute, d.second)
-file = "results/sensors_" + date_formatted + ".json"    
+file = "results/generated_sensors_" + date_formatted + ".json"    
 data = []
 
 t0 = 0

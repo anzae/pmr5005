@@ -326,7 +326,7 @@ def play():
                 flag_end = 0
                 deltaWind = pygame.time.get_ticks()
                 if TOGGLE_SERIAL:
-                    impedance('right', ser) if wind_mag < 0 else impedance('left', ser)
+                    impedance('left', ser) if wind_mag > 0 else impedance('right', ser)
             # Até aqui, e...
 
         else:

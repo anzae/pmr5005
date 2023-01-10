@@ -18,7 +18,7 @@ from consts import *
 
 d = datetime.now()
 date_formatted = '{}_{}_{}_{}h{}m{}s'.format(d.year, d.month, d.day, d.hour, d.minute, d.second)
-sensorsJson = "../results/sensors_" + date_formatted + ".json"  
+sensorsJson = "results/test_sensors_" + date_formatted + ".json"  
 
 list_sensors = []
 
