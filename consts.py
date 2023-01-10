@@ -4,7 +4,7 @@
 # -----------------------------------------------------------------------------------------------
 TOGGLE_SERIAL = False        # Uso ou não da porta serial, só funciona se estiver com o Arduino
 PORT_NAME = "COM3"          # Nome da porta serial que vai ser usada, caso esteja com Arduino
-LEVEL = 2                   # Level do jogo, de 0 a 3
+LEVEL = 1                   # Level do jogo, de 0 a 3
 # -----------------------------------------------------------------------------------------------
 
 # Arduino configuration

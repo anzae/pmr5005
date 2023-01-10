@@ -11,7 +11,7 @@ from consts import *
 # ----------------------------------------------------------
 
 # Edit file name to see respective graph
-file = 'sensors_2023_1_10_12h48m43s'
+file = 'sensors_2023_1_10_16h12m17s'
 path = 'results/{}.json'.format(file)
 
 def sensors_graphs(file):
@@ -76,7 +76,7 @@ def level_graphs():
     return(plots)
 
 if __name__ == '__main__':
-    # sensors = sensors_graphs(path)
+    sensors = sensors_graphs(path)
     level = level_graphs()
 
     fig = make_subplots(rows=3, cols=1)
@@ -85,22 +85,22 @@ if __name__ == '__main__':
     # posição atual e posição desejada
     for element in level:
         fig.add_trace(element, row=1, col=1)
-    # fig.add_trace(sensors['player'], row=1, col=1)
+    fig.add_trace(sensors['player'], row=1, col=1)
 
     # plot 2
     # pressão palmar (sensores 1 e 6) e ventos
     for element in level:
         fig.add_trace(element, row=2, col=1)
-    # fig.append_trace(sensors['sensor1'], row=2, col=1)
-    # fig.append_trace(sensors['sensor6'], row=2, col=1)
+    fig.append_trace(sensors['sensor1'], row=2, col=1)
+    fig.append_trace(sensors['sensor6'], row=2, col=1)
 
     # plot 3
     # outros sensores
     for element in level:
         fig.add_trace(element, row=3, col=1)
-    # fig.add_trace(sensors['sensor2'], row=3, col=1)
-    # fig.add_trace(sensors['sensor3'], row=3, col=1)
-    # fig.add_trace(sensors['sensor4'], row=3, col=1)
-    # fig.add_trace(sensors['sensor5'], row=3, col=1)
+    fig.add_trace(sensors['sensor2'], row=3, col=1)
+    fig.add_trace(sensors['sensor3'], row=3, col=1)
+    fig.add_trace(sensors['sensor4'], row=3, col=1)
+    fig.add_trace(sensors['sensor5'], row=3, col=1)
 
     py.offline.plot(fig)

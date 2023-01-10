@@ -49,9 +49,9 @@ def impedance(impedance, ser):
     # o guidão empurra para a esquerda ou para direita dependendo do vento
 
     if impedance == 'left':
-        ser.write(b'9')
-    if impedance == 'right':
         ser.write(b'8')
+    if impedance == 'right':
+        ser.write(b'9')
     if impedance == 'zero':
         ser.write(b'4')
     if impedance == 'no_impedance':

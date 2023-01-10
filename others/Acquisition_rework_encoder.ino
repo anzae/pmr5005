@@ -15,8 +15,8 @@
 #include <Encoder.h>
 
 // Pinos encoder
-  #define chA 4
-  #define chB 5
+  #define chA 6
+  #define chB 10
 
 //Ativação do motor por PWM (PONTE H: pinos 8 (direita) e 9 (esquerda))
   #define pinCONTROL_RH 8
@@ -54,14 +54,14 @@ public:
   }
 
   double calc_error() {
-    error = setPoint - sample;
+    error = sample - setPoint;
     return error;
   }
 
   double process() {
     // Implementação PID
-    float deltaTime = (millis() - lastProcess) / 1000.0;
-    lastProcess = millis();
+    float deltaTime = (micros() - lastProcess) / 1000000.0;
+    lastProcess = micros();
 
     //P
     P = error * kP;
@@ -75,7 +75,7 @@ public:
 
 
     // Soma tudo
-    pid = (P + I + D); //fazia * 238 + 17
+    pid = abs(P + I + D); //fazia * 238 + 17
 
     return pid;
   }
@@ -100,7 +100,7 @@ static void ADCsync() {
   uint32_t sensor6 = 0;
   
 // Para o encoder
-  Encoder encoder(chA, chB);
+  Encoder myEnc(chA, chB);  
   long encoder_pos = 0;
   long oldPosition  = -999;
 
@@ -187,13 +187,6 @@ void setup() {
   sensor5 = anaRead(A4);
   sensor6 = anaRead(A5);
 
-  //###################################################################################
-  // Inicializa vetor para o chip de quadratura
-  //###################################################################################
-  for (int pin = 0; pin < 8; pin++) {
-    pinMode(chipQuad_pins[pin], INPUT);
-  }
-
   //########### ########################################################################
   // Inicializa vetor para a média móvel da força
   //###################################################################################
@@ -201,11 +194,6 @@ void setup() {
     readingsForce[i] = 0.0;
   }
 
-  pinMode(EON, OUTPUT);
-  pinMode(SEL1, OUTPUT);
-
-  pinMode(RSTN, INPUT);
-  digitalWrite(RSTN, HIGH);
   pinMode(pinCONTROL_LH, OUTPUT);
   pinMode(pinCONTROL_RH, OUTPUT);
 }
@@ -213,10 +201,9 @@ void setup() {
 void loop() {
   while (serialFlag == '0') {
     encoder_pos = 0;
-    digitalWrite(RSTN, LOW);
-    digitalWrite(RSTN, HIGH);
     analogWrite(pinCONTROL_LH, 0);
     analogWrite(pinCONTROL_RH, 0);
+    oldPosition = -999;
     if (SerialUSB.available() > 0) {
       serialFlag = SerialUSB.read();
       tempo_inicio = millis();
@@ -241,15 +228,14 @@ void loop() {
 
     /** ----- 1. READ ENCODER -----**/
 
-    encoder_pos = encoder.read();
+    encoder_pos = myEnc.read();
     if (encoder_pos != oldPosition) {
       oldPosition = encoder_pos;
-
     }
     
     // tempos em [s]
     t_i1 = t_i;
-    t_i = (millis()/1000.0 - t_0);
+    t_i = millis() - t_0;
     
     // angulos em rad
     theta_i2 = theta_i1;
@@ -259,21 +245,16 @@ void loop() {
     /** ----- 2. CALC POSIÇÃO REF -----**/
 
     // calcula media movel dos valores da celula de carga
-    totalForce -= readingsForce[readIndexForce];
-    readingsForce[readIndexForce] = map(sensor3, -4096, 4096, -maxLoadCell, maxLoadCell); 
-    totalForce += readingsForce[readIndexForce];
-    readIndexForce ++;
-    if (readIndexForce >= numReadingsForce) readIndexForce = 0;
-    averageForce = totalForce / (numReadingsForce / 1.0); // force result to be double
+    averageForce = 2*maxLoadCell*sensor3 / 8192 - maxLoadCell;
 
     // Torque aplicado pelo usuario
     Th = averageForce * lc;  
-    deltat = t_i - t_i1;
+    deltat = (t_i - t_i1)/1000;
 
     // torque do motor
-    Tm = I_c * (theta_i - theta_i2) / (deltat * deltat) + B_c * (theta_i - theta_i1) + K_c * (theta_des - theta_i);
+    Tm = I_c * (theta_i + theta_i2 - 2 * theta_i1) / (deltat * deltat) + B_c * (theta_i - theta_i1) / deltat + K_c * (theta_des - theta_i);
     Tact = Tm - Th;
-    PWM = map(Tm, 0, maxTorqueMotor, 0, 255);
+    PWM = min(255, 255*Tact/maxTorqueMotor);
 
     /** ----- 3. CALC PID -----**/
     // Manda posição lida para o controlador
@@ -381,7 +362,7 @@ void loop() {
       serialFlag = SerialUSB.read();
       tempo_inicio = 0;
     }
-    // delay(2);
+    delay(2);
   }
 }
 
