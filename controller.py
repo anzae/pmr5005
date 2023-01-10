@@ -77,8 +77,8 @@ class Wind(Entity):
         # to cover area we need to blit in a loop
         self.image_l = pygame.transform.scale(pygame.image.load('assets/wind_l.png'), (WIND_SIZE, WIND_SIZE)).convert_alpha()
         self.image_r = pygame.transform.scale(pygame.image.load('assets/wind_r.png'), (WIND_SIZE, WIND_SIZE)).convert_alpha()
-        self.image_l.set_alpha(30)
-        self.image_r.set_alpha(30)
+        self.image_l.set_alpha(70)
+        self.image_r.set_alpha(70)
         self.y_start = y_start
         self.y_end = y_end
         self.magnitude = magnitude
